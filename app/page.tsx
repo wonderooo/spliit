@@ -1,6 +1,7 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
 import { ShaderHero } from "@/components/shader-hero";
+import { Logo } from "@/components/logo";
 import { SignInButton } from "@/components/sign-in-button";
 import { GradientHeading } from "@/components/ui/gradient-heading";
 import TextAnimate from "@/components/ui/text-animate";
@@ -40,6 +41,7 @@ export default async function LandingPage() {
         <ShaderHero />
         <div className="absolute inset-0 bg-black/30" aria-hidden />
         <div className="relative z-10 flex max-w-2xl flex-col items-center gap-6">
+          <Logo className="size-16 rounded-2xl shadow-xl ring-white/20" />
           <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur">
             ✦ Split expenses without the spreadsheet
           </span>

@@ -7,7 +7,7 @@ import { toast } from "sonner";
 
 function GoogleIcon() {
   return (
-    <svg viewBox="0 0 24 24" className="size-5" aria-hidden>
+    <svg viewBox="0 0 48 48" className="size-5" aria-hidden>
       <path
         fill="#FFC107"
         d="M43.6 20.5h-1.9V20H24v8h11.3c-1.6 4.7-6.1 8-11.3 8a12 12 0 1 1 0-24c3 0 5.8 1.1 7.9 3l5.7-5.7A20 20 0 1 0 24 44c11 0 20-8 20-20 0-1.3-.1-2.3-.4-3.5z"

@@ -1,7 +1,7 @@
 "use server";
 
 import { revalidatePath } from "next/cache";
-import { eq } from "drizzle-orm";
+import { and, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import { expenses, expenseSplits } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
@@ -79,6 +79,96 @@ export async function createExpense(input: unknown): Promise<ActionResult> {
       date: data.date,
       createdBy: session.user.id,
     }),
+    db.insert(expenseSplits).values(
+      computed.map((c) => ({
+        expenseId,
+        userId: c.userId,
+        amount: c.amount,
+        shareValue: c.shareValue === null ? null : String(c.shareValue),
+      })),
+    ),
+  ]);
+
+  revalidatePath(`/groups/${data.groupId}`);
+  revalidatePath("/dashboard");
+  return ok();
+}
+
+export async function updateExpense(
+  expenseId: string,
+  input: unknown,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session?.user) return fail("You must be signed in.");
+
+  const parsed = createExpenseSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail(parsed.error.issues[0]?.message ?? "Invalid input.");
+  }
+  const data = parsed.data;
+
+  const membership = await getMembership(data.groupId, session.user.id);
+  if (!membership) return fail("You are not a member of this group.");
+
+  const group = await getGroup(data.groupId);
+  if (!group) return fail("Group not found.");
+
+  const existing = await db
+    .select({ id: expenses.id })
+    .from(expenses)
+    .where(and(eq(expenses.id, expenseId), eq(expenses.groupId, data.groupId)))
+    .limit(1);
+  if (existing.length === 0) return fail("Expense not found.");
+
+  const members = await getGroupMembers(data.groupId);
+  const memberIds = new Set(members.map((m) => m.id));
+  if (!memberIds.has(data.paidBy)) {
+    return fail("Payer must be a group member.");
+  }
+  if (!data.splits.every((s) => memberIds.has(s.userId))) {
+    return fail("All participants must be group members.");
+  }
+
+  const totalMinor = toMinorUnits(data.amount, data.currency);
+
+  const participants =
+    data.splitType === "exact"
+      ? data.splits.map((s) => ({
+          userId: s.userId,
+          value: toMinorUnits(s.value ?? 0, data.currency),
+        }))
+      : data.splits;
+
+  let computed;
+  try {
+    computed = computeSplits(totalMinor, data.splitType, participants);
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : "Could not split the expense.");
+  }
+
+  const baseAmount = convertMinorUnits(
+    totalMinor,
+    data.fxRate,
+    data.currency,
+    group.baseCurrency,
+  );
+
+  await db.batch([
+    db
+      .update(expenses)
+      .set({
+        description: data.description,
+        category: data.category || null,
+        amount: totalMinor,
+        currency: data.currency,
+        paidBy: data.paidBy,
+        splitType: data.splitType,
+        fxRate: String(data.fxRate),
+        baseAmount,
+        date: data.date,
+      })
+      .where(eq(expenses.id, expenseId)),
+    db.delete(expenseSplits).where(eq(expenseSplits.expenseId, expenseId)),
     db.insert(expenseSplits).values(
       computed.map((c) => ({
         expenseId,

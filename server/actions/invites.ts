@@ -42,7 +42,7 @@ export async function createInvite(
 
 export async function acceptInvite(
   token: string,
-): Promise<ActionResult<{ groupId: string }>> {
+): Promise<ActionResult<{ groupId: string; alreadyMember: boolean }>> {
   const session = await getSession();
   if (!session?.user) return fail("You must be signed in.");
 
@@ -54,28 +54,47 @@ export async function acceptInvite(
 
   const invite = rows[0];
   if (!invite) return fail("This invite link is invalid.");
-  if (invite.status !== "pending") return fail("This invite is no longer active.");
+  if (invite.status === "revoked") return fail("This invite has been revoked.");
+  // An open (email-less) link stays "pending" so the whole crew can join with
+  // the same URL. Only an email-scoped invite flips to "accepted" once its one
+  // recipient joins — so "accepted" is the only status that closes a link.
+  if (invite.status === "accepted")
+    return fail("This invite has already been used.");
   if (invite.expiresAt.getTime() < Date.now()) {
     return fail("This invite link has expired.");
   }
 
-  const existing = await getMembership(invite.groupId, session.user.id);
-  if (!existing) {
-    await db.insert(groupMembers).values({
-      groupId: invite.groupId,
-      userId: session.user.id,
-      role: "member",
-    });
+  // Email-scoped invite: only the addressed account may accept it.
+  if (
+    invite.email &&
+    invite.email.toLowerCase() !== session.user.email.toLowerCase()
+  ) {
+    return fail("This invite was sent to a different email address.");
   }
 
-  await db
-    .update(invitations)
-    .set({ status: "accepted" })
-    .where(eq(invitations.id, invite.id));
+  const existing = await getMembership(invite.groupId, session.user.id);
+  if (existing) {
+    // Already in the group — a no-op. Don't consume the link or claim a join.
+    return ok({ groupId: invite.groupId, alreadyMember: true });
+  }
+
+  await db.insert(groupMembers).values({
+    groupId: invite.groupId,
+    userId: session.user.id,
+    role: "member",
+  });
+
+  // Targeted invites are single-use; open links stay reusable.
+  if (invite.email) {
+    await db
+      .update(invitations)
+      .set({ status: "accepted" })
+      .where(eq(invitations.id, invite.id));
+  }
 
   revalidatePath("/dashboard");
   revalidatePath(`/groups/${invite.groupId}`);
-  return ok({ groupId: invite.groupId });
+  return ok({ groupId: invite.groupId, alreadyMember: false });
 }
 
 export async function revokeInvite(

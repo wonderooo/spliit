@@ -10,10 +10,19 @@ import { ShaderGradientCanvas, ShaderGradient } from "@shadergradient/react";
  */
 export function ShaderHero({ className }: { className?: string }) {
   const [mounted, setMounted] = useState(false);
+  const [visible, setVisible] = useState(false);
 
   useEffect(() => {
     setMounted(true);
   }, []);
+
+  // Give the WebGL canvas a beat to paint its first frame, then fade it in over
+  // the CSS gradient so it eases in instead of popping/flashing on load.
+  useEffect(() => {
+    if (!mounted) return;
+    const id = setTimeout(() => setVisible(true), 150);
+    return () => clearTimeout(id);
+  }, [mounted]);
 
   return (
     <div
@@ -28,7 +37,13 @@ export function ShaderHero({ className }: { className?: string }) {
     >
       {mounted && (
         <ShaderGradientCanvas
-          style={{ position: "absolute", inset: 0 }}
+          style={{
+            position: "absolute",
+            inset: 0,
+            opacity: visible ? 1 : 0,
+            transition: "opacity 900ms ease-in-out",
+            pointerEvents: "none",
+          }}
           pixelDensity={1}
           fov={40}
         >

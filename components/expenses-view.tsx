@@ -1,9 +1,13 @@
 "use client";
 
-import { useOptimistic, useTransition } from "react";
+import { useState, useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { createExpense, deleteExpense } from "@/server/actions/expenses";
+import {
+  createExpense,
+  updateExpense,
+  deleteExpense,
+} from "@/server/actions/expenses";
 import type { ExpenseWithSplits, MemberUser } from "@/lib/queries";
 import type { CreateExpenseInput } from "@/lib/validators";
 import { toMinorUnits, convertMinorUnits } from "@/lib/currency";
@@ -12,6 +16,7 @@ import { ExpenseList } from "@/components/expense-list";
 
 type OptimisticAction =
   | { type: "add"; expense: ExpenseWithSplits }
+  | { type: "update"; expense: ExpenseWithSplits }
   | { type: "delete"; id: string };
 
 let tempSeq = 0;
@@ -31,13 +36,18 @@ export function ExpensesView({
 }) {
   const router = useRouter();
   const [, startTransition] = useTransition();
+  const [editing, setEditing] = useState<ExpenseWithSplits | null>(null);
 
   const [optimistic, applyOptimistic] = useOptimistic(
     expenses,
-    (state, action: OptimisticAction) =>
-      action.type === "add"
-        ? [action.expense, ...state]
-        : state.filter((e) => e.id !== action.id),
+    (state, action: OptimisticAction) => {
+      if (action.type === "add") return [action.expense, ...state];
+      if (action.type === "update")
+        return state.map((e) =>
+          e.id === action.expense.id ? action.expense : e,
+        );
+      return state.filter((e) => e.id !== action.id);
+    },
   );
 
   const names = Object.fromEntries(members.map((m) => [m.id, m.name]));
@@ -88,6 +98,30 @@ export function ExpensesView({
     });
   }
 
+  function submitEdit(target: ExpenseWithSplits, input: CreateExpenseInput) {
+    return new Promise<{ ok: boolean; error?: string }>((resolve) => {
+      startTransition(async () => {
+        applyOptimistic({
+          type: "update",
+          expense: {
+            ...buildOptimistic(input),
+            id: target.id,
+            createdAt: target.createdAt,
+          },
+        });
+        const res = await updateExpense(target.id, input);
+        if (res.ok) {
+          toast.success("Expense updated");
+          setEditing(null);
+          router.refresh();
+          resolve({ ok: true });
+        } else {
+          resolve({ ok: false, error: res.error });
+        }
+      });
+    });
+  }
+
   function onDelete(id: string) {
     startTransition(async () => {
       applyOptimistic({ type: "delete", id });
@@ -116,7 +150,23 @@ export function ExpensesView({
         names={names}
         currentUserId={currentUserId}
         onDelete={onDelete}
+        onEdit={setEditing}
       />
+      {editing && (
+        <ExpenseForm
+          key={editing.id}
+          groupId={groupId}
+          baseCurrency={baseCurrency}
+          members={members}
+          currentUserId={currentUserId}
+          expense={editing}
+          open={editing != null}
+          onOpenChange={(o) => {
+            if (!o) setEditing(null);
+          }}
+          onSubmitExpense={(input) => submitEdit(editing, input)}
+        />
+      )}
     </div>
   );
 }

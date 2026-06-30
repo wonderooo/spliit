@@ -1,5 +1,5 @@
 import "server-only";
-import { and, desc, eq } from "drizzle-orm";
+import { and, countDistinct, desc, eq } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   groups,
@@ -130,6 +130,48 @@ export async function getGroupExpenses(
     ...e,
     splits: byExpense.get(e.id) ?? [],
   }));
+}
+
+/** Context for the public /invite/[token] page: which group, who invited you,
+ *  and whether the link is still usable. Returns null for unknown tokens. */
+export async function getInviteContext(token: string) {
+  const rows = await db
+    .select({
+      status: invitations.status,
+      expiresAt: invitations.expiresAt,
+      groupId: invitations.groupId,
+      groupName: groups.name,
+      groupDescription: groups.description,
+      baseCurrency: groups.baseCurrency,
+      inviterName: userTable.name,
+    })
+    .from(invitations)
+    .innerJoin(groups, eq(groups.id, invitations.groupId))
+    .innerJoin(userTable, eq(userTable.id, invitations.invitedBy))
+    .where(eq(invitations.token, token))
+    .limit(1);
+
+  const invite = rows[0];
+  if (!invite) return null;
+
+  const [{ count: memberCount }] = await db
+    .select({ count: countDistinct(groupMembers.userId) })
+    .from(groupMembers)
+    .where(eq(groupMembers.groupId, invite.groupId));
+
+  const expired = invite.expiresAt.getTime() < Date.now();
+  const usable = invite.status !== "revoked" && !expired;
+
+  return {
+    groupName: invite.groupName,
+    groupDescription: invite.groupDescription,
+    baseCurrency: invite.baseCurrency,
+    inviterName: invite.inviterName,
+    memberCount,
+    status: invite.status,
+    expired,
+    usable,
+  };
 }
 
 export async function getPendingInvitations(groupId: string) {

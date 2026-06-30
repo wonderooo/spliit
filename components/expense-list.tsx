@@ -1,8 +1,10 @@
 "use client";
 
-import { MoreVertical, Trash2, Receipt } from "lucide-react";
+import { useState } from "react";
+import { MoreVertical, Pencil, Trash2, Receipt } from "lucide-react";
 import type { ExpenseWithSplits } from "@/lib/queries";
 import { formatMoney } from "@/lib/currency";
+import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
@@ -11,6 +13,14 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
 
 const SPLIT_LABEL: Record<string, string> = {
   equal: "equally",
@@ -25,13 +35,17 @@ export function ExpenseList({
   names,
   currentUserId,
   onDelete,
+  onEdit,
 }: {
   baseCurrency: string;
   expenses: ExpenseWithSplits[];
   names: Record<string, string>;
   currentUserId: string;
   onDelete: (id: string) => void;
+  onEdit: (expense: ExpenseWithSplits) => void;
 }) {
+  const [toDelete, setToDelete] = useState<ExpenseWithSplits | null>(null);
+
   function nameOf(id: string) {
     return id === currentUserId ? "You" : (names[id] ?? "Someone");
   }
@@ -51,7 +65,8 @@ export function ExpenseList({
   }
 
   return (
-    <ul className="flex flex-col gap-2">
+    <>
+      <ul className="flex flex-col gap-2">
       {expenses.map((e) => {
         const foreign = e.currency !== baseCurrency;
         return (
@@ -89,9 +104,13 @@ export function ExpenseList({
                   <MoreVertical className="size-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
+                  <DropdownMenuItem onClick={() => onEdit(e)}>
+                    <Pencil className="size-4" />
+                    Edit
+                  </DropdownMenuItem>
                   <DropdownMenuItem
                     variant="destructive"
-                    onClick={() => onDelete(e.id)}
+                    onClick={() => setToDelete(e)}
                   >
                     <Trash2 className="size-4" />
                     Delete
@@ -102,6 +121,43 @@ export function ExpenseList({
           </li>
         );
       })}
-    </ul>
+      </ul>
+
+      <Dialog
+        open={toDelete != null}
+        onOpenChange={(o) => {
+          if (!o) setToDelete(null);
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>Delete this expense?</DialogTitle>
+            <DialogDescription>
+              {toDelete ? (
+                <>
+                  &ldquo;{toDelete.description}&rdquo; (
+                  {formatMoney(toDelete.amount, toDelete.currency)}) will be
+                  removed for everyone. This can&apos;t be undone.
+                </>
+              ) : null}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setToDelete(null)}>
+              Cancel
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (toDelete) onDelete(toDelete.id);
+                setToDelete(null);
+              }}
+            >
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </>
   );
 }

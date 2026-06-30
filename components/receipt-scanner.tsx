@@ -29,12 +29,14 @@ import { CurrencyPicker } from "@/components/currency-picker";
 import { cn } from "@/lib/utils";
 
 export type ScanResult = {
+  merchant: string | null;
   totalMajor: number;
   currency: string;
   splits: { userId: string; valueMajor: number }[];
 };
 
 type ScannedReceipt = {
+  merchant: string | null;
   items: { name: string; price: number }[];
   tax: number | null;
   tip: number | null;
@@ -92,6 +94,7 @@ export function ReceiptScanner({
   const [tip, setTip] = useState("");
   const [scanCurrency, setScanCurrency] = useState(currency);
   const [detected, setDetected] = useState(false);
+  const [merchant, setMerchant] = useState<string | null>(null);
   const fileRef = useRef<HTMLInputElement>(null);
 
   const allMemberIds = useMemo(() => members.map((m) => m.id), [members]);
@@ -113,6 +116,7 @@ export function ReceiptScanner({
     setTip("");
     setScanCurrency(currency);
     setDetected(false);
+    setMerchant(null);
   }
 
   function onOpenChange(v: boolean) {
@@ -145,6 +149,7 @@ export function ReceiptScanner({
       const useCurrency = detectedCurrency ?? currency;
       setScanCurrency(useCurrency);
       setDetected(Boolean(detectedCurrency));
+      setMerchant(data.merchant);
 
       const decimals = currencyDecimals(useCurrency);
       setRows(
@@ -259,6 +264,7 @@ export function ReceiptScanner({
     }
 
     onApply({
+      merchant,
       totalMajor: toMajorUnits(totalMinor, scanCurrency),
       currency: scanCurrency,
       splits,

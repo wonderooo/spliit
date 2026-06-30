@@ -1,13 +1,18 @@
 "use client";
 
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
 import { getSuggestedRate } from "@/server/actions/fx";
-import type { MemberUser } from "@/lib/queries";
+import type { ExpenseWithSplits, MemberUser } from "@/lib/queries";
 import type { SplitType } from "@/lib/db/schema";
 import type { CreateExpenseInput } from "@/lib/validators";
-import { toMinorUnits, formatMoney, convertMinorUnits } from "@/lib/currency";
+import {
+  toMinorUnits,
+  toMajorUnits,
+  formatMoney,
+  convertMinorUnits,
+} from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -50,6 +55,9 @@ export function ExpenseForm({
   members,
   currentUserId,
   onSubmitExpense,
+  expense,
+  open: controlledOpen,
+  onOpenChange,
 }: {
   groupId: string;
   baseCurrency: string;
@@ -58,30 +66,56 @@ export function ExpenseForm({
   onSubmitExpense: (
     input: CreateExpenseInput,
   ) => Promise<{ ok: boolean; error?: string }>;
+  /** When provided, the form edits this expense instead of creating one. */
+  expense?: ExpenseWithSplits;
+  /** Controlled open state (used for edit; create mode manages its own). */
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
 }) {
-  const [open, setOpen] = useState(false);
+  const isEdit = expense != null;
+  const isControlled = controlledOpen !== undefined;
+
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? controlledOpen! : internalOpen;
+  const setOpen = isControlled ? onOpenChange! : setInternalOpen;
   const [saving, setSaving] = useState(false);
 
-  const [description, setDescription] = useState("");
-  const [amount, setAmount] = useState("");
-  const [currency, setCurrency] = useState(baseCurrency);
-  const [paidBy, setPaidBy] = useState(currentUserId);
-  const [date, setDate] = useState(todayISO());
-  const [splitType, setSplitType] = useState<SplitType>("equal");
-  const [selected, setSelected] = useState<Set<string>>(
-    new Set(members.map((m) => m.id)),
+  const [description, setDescription] = useState(expense?.description ?? "");
+  const [amount, setAmount] = useState(
+    expense ? String(toMajorUnits(expense.amount, expense.currency)) : "",
   );
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [fxRate, setFxRate] = useState("1");
+  const [currency, setCurrency] = useState(expense?.currency ?? baseCurrency);
+  const [paidBy, setPaidBy] = useState(expense?.paidBy ?? currentUserId);
+  const [date, setDate] = useState(expense?.date ?? todayISO());
+  const [splitType, setSplitType] = useState<SplitType>(
+    (expense?.splitType as SplitType) ?? "equal",
+  );
+  const [selected, setSelected] = useState<Set<string>>(
+    expense
+      ? new Set(expense.splits.map((s) => s.userId))
+      : new Set(members.map((m) => m.id)),
+  );
+  const [values, setValues] = useState<Record<string, string>>(
+    expense ? initialEditValues(expense) : {},
+  );
+  const [fxRate, setFxRate] = useState(expense?.fxRate ?? "1");
 
   const isForeign = currency !== baseCurrency;
   const amountNum = Number(amount) || 0;
   const totalMinor = amount ? safeMinor(amount, currency) : 0;
 
+  // Skip the first auto-FX fetch when editing so we keep the saved rate; later
+  // currency/date edits still refresh it.
+  const skipFxFetch = useRef(isEdit);
+
   // Fetch a suggested FX rate when currency/date changes.
   useEffect(() => {
     if (!isForeign) {
       setFxRate("1");
+      return;
+    }
+    if (skipFxFetch.current) {
+      skipFxFetch.current = false;
       return;
     }
     let active = true;
@@ -159,9 +193,11 @@ export function ExpenseForm({
     setSaving(false);
 
     if (res.ok) {
-      reset();
+      if (!isEdit) reset();
     } else {
-      toast.error(res.error ?? "Could not add expense.");
+      toast.error(
+        res.error ?? (isEdit ? "Could not save changes." : "Could not add expense."),
+      );
       setOpen(true); // reopen so the user can fix and retry (values preserved)
     }
   }
@@ -174,23 +210,25 @@ export function ExpenseForm({
     setValues(
       Object.fromEntries(result.splits.map((s) => [s.userId, String(s.valueMajor)])),
     );
-    if (!description.trim()) setDescription("Receipt");
+    if (!description.trim()) setDescription(result.merchant?.trim() || "Receipt");
   }
 
   return (
     <Sheet open={open} onOpenChange={setOpen}>
-      <SheetTrigger asChild>
-        <Button className="w-full sm:w-auto">
-          <Plus className="size-4" />
-          Add expense
-        </Button>
-      </SheetTrigger>
+      {!isControlled && (
+        <SheetTrigger asChild>
+          <Button className="w-full sm:w-auto">
+            <Plus className="size-4" />
+            Add expense
+          </Button>
+        </SheetTrigger>
+      )}
       <SheetContent
         side="bottom"
         className="max-h-[92svh] overflow-y-auto rounded-t-2xl sm:max-w-lg"
       >
         <SheetHeader>
-          <SheetTitle>Add expense</SheetTitle>
+          <SheetTitle>{isEdit ? "Edit expense" : "Add expense"}</SheetTitle>
           <SheetDescription>
             Record what was paid and how to split it.
           </SheetDescription>
@@ -399,13 +437,34 @@ export function ExpenseForm({
               type="submit"
               disabled={saving || !description.trim() || amountNum <= 0}
             >
-              {saving ? "Saving…" : "Add expense"}
+              {saving
+                ? "Saving…"
+                : isEdit
+                  ? "Save changes"
+                  : "Add expense"}
             </Button>
           </SheetFooter>
         </form>
       </SheetContent>
     </Sheet>
   );
+}
+
+/** Seed the split editor when editing: exact splits show major-unit amounts,
+ *  percentage/shares show their stored raw weight. Equal needs no values. */
+function initialEditValues(expense: ExpenseWithSplits): Record<string, string> {
+  const out: Record<string, string> = {};
+  for (const s of expense.splits) {
+    if (expense.splitType === "exact") {
+      out[s.userId] = String(toMajorUnits(s.amount, expense.currency));
+    } else if (
+      expense.splitType === "percentage" ||
+      expense.splitType === "shares"
+    ) {
+      out[s.userId] = s.shareValue != null ? String(Number(s.shareValue)) : "";
+    }
+  }
+  return out;
 }
 
 function safeMinor(amount: string, currency: string) {

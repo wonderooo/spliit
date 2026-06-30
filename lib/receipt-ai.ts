@@ -7,6 +7,7 @@ import { z } from "zod";
 const DEFAULT_MODEL = "gemini-2.5-flash";
 
 export type ScannedReceipt = {
+  merchant: string | null;
   items: { name: string; price: number }[];
   tax: number | null;
   tip: number | null;
@@ -16,6 +17,7 @@ export type ScannedReceipt = {
 
 // Validates the model's JSON so a malformed response can't reach the UI.
 const llmReceiptSchema = z.object({
+  merchant: z.string().nullable().optional(),
   items: z
     .array(z.object({ name: z.string(), price: z.number() }))
     .default([]),
@@ -29,6 +31,8 @@ function prompt(fallbackCurrency: string): string {
   return [
     "You are a precise receipt parser. Read this receipt image and extract every",
     "purchased line item with its price.",
+    "Extract the merchant/store name (e.g. the business at the top of the receipt)",
+    "as `merchant`; use null if there isn't a clear one.",
     "Detect the receipt's currency and return its ISO 4217 code (e.g. USD, EUR, JPY, GBP)",
     "based on currency symbols, printed codes, language, and the country/address if shown.",
     `If the currency is genuinely unclear, use ${fallbackCurrency}.`,
@@ -66,6 +70,11 @@ export async function scanReceipt(
       responseSchema: {
         type: Type.OBJECT,
         properties: {
+          merchant: {
+            type: Type.STRING,
+            nullable: true,
+            description: "Merchant / store name printed on the receipt.",
+          },
           items: {
             type: Type.ARRAY,
             items: {
@@ -103,6 +112,7 @@ export async function scanReceipt(
 
   const parsed = llmReceiptSchema.parse(raw);
   return {
+    merchant: parsed.merchant?.trim() ? parsed.merchant.trim() : null,
     items: parsed.items.filter((i) => i.name.trim().length > 0 && i.price > 0),
     tax: parsed.tax ?? null,
     tip: parsed.tip ?? null,

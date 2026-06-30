@@ -16,7 +16,11 @@ export function AcceptInvite({ token }: { token: string }) {
     startTransition(async () => {
       const res = await acceptInvite(token);
       if (res.ok) {
-        toast.success("You've joined the group");
+        toast.success(
+          res.data.alreadyMember
+            ? "You're already in this group"
+            : "You've joined the group",
+        );
         router.push(`/groups/${res.data.groupId}`);
         router.refresh();
       } else {

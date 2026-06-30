@@ -226,7 +226,8 @@ function InviteDialog({ groupId }: { groupId: string }) {
                 placeholder="friend@example.com"
               />
               <p className="text-xs text-muted-foreground">
-                For your reference — the link itself lets anyone join.
+                Leave blank and anyone with the link can join. Set an email to
+                lock the link to that one person.
               </p>
             </div>
             <Button type="submit" disabled={pending}>
@@ -237,7 +238,12 @@ function InviteDialog({ groupId }: { groupId: string }) {
           <div className="flex flex-col gap-3">
             <div className="flex items-center gap-2">
               <Input readOnly value={link} className="text-xs" />
-              <Button size="icon" variant="secondary" onClick={copy}>
+              <Button
+                size="icon"
+                variant="secondary"
+                onClick={copy}
+                aria-label="Copy invite link"
+              >
                 {copied ? (
                   <Check className="size-4" />
                 ) : (
