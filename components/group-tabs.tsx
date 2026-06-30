@@ -3,15 +3,17 @@
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { cn } from "@/lib/utils";
+import { useT } from "@/components/i18n-provider";
 
 export function GroupTabs({ groupId }: { groupId: string }) {
   const pathname = usePathname();
+  const t = useT();
   const base = `/groups/${groupId}`;
   const tabs = [
-    { href: base, label: "Expenses" },
-    { href: `${base}/balances`, label: "Balances" },
-    { href: `${base}/settle`, label: "Settle up" },
-    { href: `${base}/members`, label: "Members" },
+    { href: base, label: t.nav.expenses },
+    { href: `${base}/balances`, label: t.nav.balances },
+    { href: `${base}/settle`, label: t.nav.settle },
+    { href: `${base}/members`, label: t.nav.members },
   ];
 
   return (

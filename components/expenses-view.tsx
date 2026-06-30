@@ -13,6 +13,8 @@ import type { CreateExpenseInput } from "@/lib/validators";
 import { toMinorUnits, convertMinorUnits } from "@/lib/currency";
 import { ExpenseForm } from "@/components/expense-form";
 import { ExpenseList } from "@/components/expense-list";
+import { useT } from "@/components/i18n-provider";
+import { errorText } from "@/lib/action-result";
 
 type OptimisticAction =
   | { type: "add"; expense: ExpenseWithSplits }
@@ -34,6 +36,7 @@ export function ExpensesView({
   currentUserId: string;
   expenses: ExpenseWithSplits[];
 }) {
+  const t = useT();
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [editing, setEditing] = useState<ExpenseWithSplits | null>(null);
@@ -88,7 +91,7 @@ export function ExpensesView({
         applyOptimistic({ type: "add", expense: buildOptimistic(input) });
         const res = await createExpense(input);
         if (res.ok) {
-          toast.success("Expense added");
+          toast.success(t.expensesView.added);
           router.refresh();
           resolve({ ok: true });
         } else {
@@ -111,7 +114,7 @@ export function ExpensesView({
         });
         const res = await updateExpense(target.id, input);
         if (res.ok) {
-          toast.success("Expense updated");
+          toast.success(t.expensesView.updated);
           setEditing(null);
           router.refresh();
           resolve({ ok: true });
@@ -127,10 +130,10 @@ export function ExpensesView({
       applyOptimistic({ type: "delete", id });
       const res = await deleteExpense(id, groupId);
       if (res.ok) {
-        toast.success("Expense deleted");
+        toast.success(t.expensesView.deleted);
         router.refresh();
       } else {
-        toast.error(res.error);
+        toast.error(errorText(t, res.error));
       }
     });
   }

@@ -2,7 +2,9 @@ import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
+import { I18nProvider } from "@/components/i18n-provider";
 import { Toaster } from "@/components/ui/sonner";
+import { getDictionary, getLocale } from "@/lib/i18n/dictionary";
 
 const geistSans = Geist({
   variable: "--font-sans",
@@ -14,30 +16,34 @@ const geistMono = Geist_Mono({
   subsets: ["latin"],
 });
 
-export const metadata: Metadata = {
-  title: "Spliit — split expenses with friends",
-  description:
-    "Split trip and group expenses in any currency, see who owes what, and settle up in a tap.",
-  applicationName: "Spliit",
-  appleWebApp: {
-    capable: true,
-    title: "Spliit",
-    statusBarStyle: "black-translucent",
-  },
-};
+export async function generateMetadata(): Promise<Metadata> {
+  const dict = await getDictionary();
+  return {
+    title: dict.meta.title,
+    description: dict.meta.description,
+    applicationName: "Spliit",
+    appleWebApp: {
+      capable: true,
+      title: "Spliit",
+      statusBarStyle: "black-translucent",
+    },
+  };
+}
 
 export const viewport: Viewport = {
   themeColor: "#0b0710",
 };
 
-export default function RootLayout({
+export default async function RootLayout({
   children,
 }: Readonly<{
   children: React.ReactNode;
 }>) {
+  const [locale, dict] = await Promise.all([getLocale(), getDictionary()]);
+
   return (
     <html
-      lang="en"
+      lang={locale}
       suppressHydrationWarning
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
     >
@@ -48,8 +54,10 @@ export default function RootLayout({
           enableSystem
           disableTransitionOnChange
         >
-          {children}
-          <Toaster richColors position="top-center" />
+          <I18nProvider locale={locale} dict={dict}>
+            {children}
+            <Toaster richColors position="top-center" />
+          </I18nProvider>
         </ThemeProvider>
       </body>
     </html>

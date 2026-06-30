@@ -1,4 +1,5 @@
 import { requireUser } from "@/lib/session";
+import { getDictionary } from "@/lib/i18n/dictionary";
 import { getGroup, getGroupMembers, getGroupBalances } from "@/lib/queries";
 import { Card } from "@/components/ui/card";
 import { BalanceAmount } from "@/components/balance-amount";
@@ -25,6 +26,7 @@ export default async function BalancesPage({
 }) {
   const { id } = await params;
   const user = await requireUser();
+  const dict = await getDictionary();
 
   const [group, members, { net, transactions }] = await Promise.all([
     getGroup(id),
@@ -35,7 +37,10 @@ export default async function BalancesPage({
 
   const cur = group.baseCurrency;
   const nameOf = (uid: string) =>
-    uid === user.id ? "You" : (members.find((m) => m.id === uid)?.name ?? "Someone");
+    uid === user.id
+      ? dict.common.you
+      : (members.find((m) => m.id === uid)?.name ??
+        dict.pages.balances.someone);
 
   const allSettled = transactions.length === 0;
 
@@ -44,7 +49,7 @@ export default async function BalancesPage({
       {/* Per-member balances */}
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold text-muted-foreground">
-          Balances
+          {dict.pages.balances.balancesHeading}
         </h2>
         <Card className="gap-0 p-0">
           <ul className="divide-y">
@@ -62,16 +67,16 @@ export default async function BalancesPage({
                     </AvatarFallback>
                   </Avatar>
                   <span className="flex-1 truncate text-sm">
-                    {m.id === user.id ? "You" : m.name}
+                    {m.id === user.id ? dict.common.you : m.name}
                   </span>
                   <div className="text-right">
                     <BalanceAmount minor={bal} currency={cur} showSign />
                     <p className="text-xs text-muted-foreground">
                       {bal === 0
-                        ? "settled"
+                        ? dict.pages.balances.settled
                         : bal > 0
-                          ? "gets back"
-                          : "owes"}
+                          ? dict.pages.balances.getsBack
+                          : dict.pages.balances.owes}
                     </p>
                   </div>
                 </li>
@@ -84,14 +89,16 @@ export default async function BalancesPage({
       {/* Simplified settle-up plan */}
       <section className="flex flex-col gap-2">
         <h2 className="text-sm font-semibold text-muted-foreground">
-          Suggested payments
+          {dict.pages.balances.suggestedPayments}
         </h2>
         {allSettled ? (
           <Card className="flex flex-col items-center gap-2 p-8 text-center">
             <PartyPopper className="size-6 text-emerald-500" />
-            <p className="font-semibold">Everyone is settled up</p>
+            <p className="font-semibold">
+              {dict.pages.balances.allSettledTitle}
+            </p>
             <p className="text-sm text-muted-foreground">
-              No payments needed right now.
+              {dict.pages.balances.allSettledBody}
             </p>
           </Card>
         ) : (

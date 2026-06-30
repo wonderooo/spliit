@@ -13,6 +13,8 @@ import {
 } from "@/components/ui/dropdown-menu";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { LogOut, Moon, Sun } from "lucide-react";
+import { useT } from "@/components/i18n-provider";
+import { LanguageMenuSub } from "@/components/language-switcher";
 
 export function UserMenu({
   name,
@@ -25,6 +27,7 @@ export function UserMenu({
 }) {
   const router = useRouter();
   const { theme, setTheme } = useTheme();
+  const t = useT();
 
   const initials = name
     .split(" ")
@@ -56,6 +59,7 @@ export function UserMenu({
           </span>
         </DropdownMenuLabel>
         <DropdownMenuSeparator />
+        <LanguageMenuSub />
         <DropdownMenuItem
           onClick={() => setTheme(theme === "dark" ? "light" : "dark")}
         >
@@ -64,11 +68,11 @@ export function UserMenu({
           ) : (
             <Moon className="size-4" />
           )}
-          Toggle theme
+          {t.common.toggleTheme}
         </DropdownMenuItem>
         <DropdownMenuItem onClick={signOut} variant="destructive">
           <LogOut className="size-4" />
-          Sign out
+          {t.common.signOut}
         </DropdownMenuItem>
       </DropdownMenuContent>
     </DropdownMenu>

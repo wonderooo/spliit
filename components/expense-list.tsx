@@ -21,13 +21,18 @@ import {
   DialogHeader,
   DialogTitle,
 } from "@/components/ui/dialog";
+import { useT } from "@/components/i18n-provider";
+import { format } from "@/lib/i18n/config";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 
-const SPLIT_LABEL: Record<string, string> = {
-  equal: "equally",
-  exact: "exact",
-  percentage: "%",
-  shares: "shares",
-};
+function splitLabel(t: Dictionary): Record<string, string> {
+  return {
+    equal: t.expenseList.splitEqually,
+    exact: t.expenseList.splitExact,
+    percentage: "%",
+    shares: t.expenseList.splitShares,
+  };
+}
 
 export function ExpenseList({
   baseCurrency,
@@ -44,10 +49,12 @@ export function ExpenseList({
   onDelete: (id: string) => void;
   onEdit: (expense: ExpenseWithSplits) => void;
 }) {
+  const t = useT();
+  const SPLIT_LABEL = splitLabel(t);
   const [toDelete, setToDelete] = useState<ExpenseWithSplits | null>(null);
 
   function nameOf(id: string) {
-    return id === currentUserId ? "You" : (names[id] ?? "Someone");
+    return id === currentUserId ? t.common.you : (names[id] ?? t.expenseList.someone);
   }
 
   if (expenses.length === 0) {
@@ -56,9 +63,9 @@ export function ExpenseList({
         <div className="inline-flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
           <Receipt className="size-6" />
         </div>
-        <p className="font-semibold">No expenses yet</p>
+        <p className="font-semibold">{t.expenseList.emptyTitle}</p>
         <p className="text-sm text-muted-foreground">
-          Add your first expense to start tracking who owes what.
+          {t.expenseList.emptyBody}
         </p>
       </Card>
     );
@@ -82,8 +89,8 @@ export function ExpenseList({
                   ) : null}
                 </div>
                 <p className="text-xs text-muted-foreground">
-                  {nameOf(e.paidBy)} paid · {e.date} ·{" "}
-                  {SPLIT_LABEL[e.splitType] ?? e.splitType}
+                  {format(t.expenseList.paidBy, { name: nameOf(e.paidBy) })} ·{" "}
+                  {e.date} · {SPLIT_LABEL[e.splitType] ?? e.splitType}
                 </p>
               </div>
               <div className="text-right">
@@ -99,21 +106,21 @@ export function ExpenseList({
               <DropdownMenu>
                 <DropdownMenuTrigger
                   className="rounded-md p-1 text-muted-foreground hover:text-foreground"
-                  aria-label="Expense actions"
+                  aria-label={t.expenseList.actions}
                 >
                   <MoreVertical className="size-4" />
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => onEdit(e)}>
                     <Pencil className="size-4" />
-                    Edit
+                    {t.expenseList.edit}
                   </DropdownMenuItem>
                   <DropdownMenuItem
                     variant="destructive"
                     onClick={() => setToDelete(e)}
                   >
                     <Trash2 className="size-4" />
-                    Delete
+                    {t.expenseList.delete}
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -131,20 +138,19 @@ export function ExpenseList({
       >
         <DialogContent className="max-w-sm">
           <DialogHeader>
-            <DialogTitle>Delete this expense?</DialogTitle>
+            <DialogTitle>{t.expenseList.deleteTitle}</DialogTitle>
             <DialogDescription>
-              {toDelete ? (
-                <>
-                  &ldquo;{toDelete.description}&rdquo; (
-                  {formatMoney(toDelete.amount, toDelete.currency)}) will be
-                  removed for everyone. This can&apos;t be undone.
-                </>
-              ) : null}
+              {toDelete
+                ? format(t.expenseList.deleteBody, {
+                    description: toDelete.description,
+                    amount: formatMoney(toDelete.amount, toDelete.currency),
+                  })
+                : null}
             </DialogDescription>
           </DialogHeader>
           <DialogFooter className="gap-2 sm:gap-2">
             <Button variant="outline" onClick={() => setToDelete(null)}>
-              Cancel
+              {t.common.cancel}
             </Button>
             <Button
               variant="destructive"
@@ -153,7 +159,7 @@ export function ExpenseList({
                 setToDelete(null);
               }}
             >
-              Delete
+              {t.expenseList.delete}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -34,6 +34,9 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CurrencyPicker } from "@/components/currency-picker";
+import { useT } from "@/components/i18n-provider";
+import { errorText } from "@/lib/action-result";
+import { format } from "@/lib/i18n/config";
 
 type SettlementRow = {
   id: string;
@@ -85,6 +88,7 @@ export function SettleUp({
   transactions: Transaction[];
   settlements: SettlementRow[];
 }) {
+  const t = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [prefill, setPrefill] = useState<Prefill | null>(null);
@@ -105,8 +109,8 @@ export function SettleUp({
 
   const nameOf = (uid: string) =>
     uid === currentUserId
-      ? "You"
-      : (members.find((m) => m.id === uid)?.name ?? "Someone");
+      ? t.common.you
+      : (members.find((m) => m.id === uid)?.name ?? t.settleUp.someone);
 
   function openWith(p: Prefill | null) {
     setPrefill(p);
@@ -152,7 +156,7 @@ export function SettleUp({
           note: p.note,
         });
         if (res.ok) {
-          toast.success("Payment recorded");
+          toast.success(t.settleUp.paymentRecorded);
           router.refresh();
           resolve({ ok: true });
         } else {
@@ -167,10 +171,10 @@ export function SettleUp({
       applyOptimistic({ type: "delete", id });
       const res = await deleteSettlement(id, groupId);
       if (res.ok) {
-        toast.success("Payment removed");
+        toast.success(t.settleUp.paymentRemoved);
         router.refresh();
       } else {
-        toast.error(res.error);
+        toast.error(errorText(t, res.error));
       }
     });
   }
@@ -181,7 +185,7 @@ export function SettleUp({
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-muted-foreground">
-            Suggested payments
+            {t.settleUp.suggestedPayments}
           </h2>
           <Button
             size="sm"
@@ -197,43 +201,43 @@ export function SettleUp({
             }
           >
             <Plus className="size-4" />
-            Record payment
+            {t.settleUp.recordPayment}
           </Button>
         </div>
 
         {transactions.length === 0 ? (
           <Card className="flex flex-col items-center gap-2 p-8 text-center">
             <PartyPopper className="size-6 text-emerald-500" />
-            <p className="font-semibold">All settled up</p>
+            <p className="font-semibold">{t.settleUp.allSettledUp}</p>
             <p className="text-sm text-muted-foreground">
-              Nothing to pay back right now.
+              {t.settleUp.nothingToPay}
             </p>
           </Card>
         ) : (
           <Card className="gap-0 p-0">
             <ul className="divide-y">
-              {transactions.map((t, i) => (
+              {transactions.map((tx, i) => (
                 <li key={i} className="flex items-center gap-2 px-4 py-3">
                   <div className="flex flex-1 items-center gap-2 text-sm">
-                    <span className="font-medium">{nameOf(t.from)}</span>
+                    <span className="font-medium">{nameOf(tx.from)}</span>
                     <ArrowRight className="size-4 text-muted-foreground" />
-                    <span className="font-medium">{nameOf(t.to)}</span>
+                    <span className="font-medium">{nameOf(tx.to)}</span>
                   </div>
                   <span className="font-semibold tabular-nums">
-                    {formatMoney(t.amount, baseCurrency)}
+                    {formatMoney(tx.amount, baseCurrency)}
                   </span>
                   <Button
                     size="sm"
                     variant="secondary"
                     onClick={() =>
                       openWith({
-                        fromUserId: t.from,
-                        toUserId: t.to,
-                        amountMajor: toMajorUnits(t.amount, baseCurrency),
+                        fromUserId: tx.from,
+                        toUserId: tx.to,
+                        amountMajor: toMajorUnits(tx.amount, baseCurrency),
                       })
                     }
                   >
-                    Settle
+                    {t.settleUp.settle}
                   </Button>
                 </li>
               ))}
@@ -246,7 +250,7 @@ export function SettleUp({
       {optimistic.length > 0 && (
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-muted-foreground">
-            Payment history
+            {t.settleUp.paymentHistory}
           </h2>
           <Card className="gap-0 p-0">
             <ul className="divide-y">
@@ -288,6 +292,7 @@ function SettlementItem({
   nameOf: (uid: string) => string;
   onDelete: (id: string) => void;
 }) {
+  const t = useT();
   const foreign = s.currency !== baseCurrency;
 
   return (
@@ -316,7 +321,7 @@ function SettlementItem({
       <button
         onClick={() => onDelete(s.id)}
         className="rounded-md p-1 text-muted-foreground hover:text-rose-500"
-        aria-label="Delete payment"
+        aria-label={t.settleUp.deletePayment}
       >
         <Trash2 className="size-4" />
       </button>
@@ -341,6 +346,7 @@ function SettleDialog({
   currentUserId: string;
   onRecord: (p: RecordPayload) => Promise<{ ok: boolean; error?: string }>;
 }) {
+  const t = useT();
   const [saving, setSaving] = useState(false);
 
   const [fromUserId, setFromUserId] = useState(currentUserId);
@@ -396,11 +402,11 @@ function SettleDialog({
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!toUserId) {
-      toast.error("Pick who received the payment.");
+      toast.error(t.errors.pickRecipient);
       return;
     }
     if (fromUserId === toUserId) {
-      toast.error("Payer and recipient must differ.");
+      toast.error(t.errors.settlementSamePerson);
       return;
     }
 
@@ -418,7 +424,7 @@ function SettleDialog({
     });
     setSaving(false);
     if (!res.ok) {
-      toast.error(res.error ?? "Could not record payment.");
+      toast.error(res.error ? errorText(t, res.error) : t.settleUp.couldNotRecord);
       onOpenChange(true);
     }
   }
@@ -427,15 +433,13 @@ function SettleDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="max-h-[92svh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Record a payment</DialogTitle>
-          <DialogDescription>
-            Log money that changed hands to settle a debt.
-          </DialogDescription>
+          <DialogTitle>{t.settleUp.dialogTitle}</DialogTitle>
+          <DialogDescription>{t.settleUp.dialogDescription}</DialogDescription>
         </DialogHeader>
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-2">
-              <Label>From</Label>
+              <Label>{t.settleUp.from}</Label>
               <Select value={fromUserId} onValueChange={setFromUserId}>
                 <SelectTrigger>
                   <SelectValue />
@@ -443,22 +447,22 @@ function SettleDialog({
                 <SelectContent>
                   {members.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
-                      {m.id === currentUserId ? "You" : m.name}
+                      {m.id === currentUserId ? t.common.you : m.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="flex flex-col gap-2">
-              <Label>To</Label>
+              <Label>{t.settleUp.to}</Label>
               <Select value={toUserId} onValueChange={setToUserId}>
                 <SelectTrigger>
-                  <SelectValue placeholder="Select" />
+                  <SelectValue placeholder={t.settleUp.selectPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
                   {members.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
-                      {m.id === currentUserId ? "You" : m.name}
+                      {m.id === currentUserId ? t.common.you : m.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -468,7 +472,7 @@ function SettleDialog({
 
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2 flex flex-col gap-2">
-              <Label htmlFor="s-amount">Amount</Label>
+              <Label htmlFor="s-amount">{t.settleUp.amount}</Label>
               <Input
                 id="s-amount"
                 type="number"
@@ -482,7 +486,7 @@ function SettleDialog({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label>Currency</Label>
+              <Label>{t.settleUp.currency}</Label>
               <CurrencyPicker value={currency} onChange={setCurrency} />
             </div>
           </div>
@@ -492,7 +496,7 @@ function SettleDialog({
               <div className="flex items-end gap-3">
                 <div className="flex flex-1 flex-col gap-1.5">
                   <Label htmlFor="s-fx" className="text-xs">
-                    Rate (1 {currency} → {baseCurrency})
+                    {format(t.settleUp.rateLabel, { currency, baseCurrency })}
                   </Label>
                   <Input
                     id="s-fx"
@@ -515,7 +519,7 @@ function SettleDialog({
           )}
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="s-date">Date</Label>
+            <Label htmlFor="s-date">{t.settleUp.date}</Label>
             <Input
               id="s-date"
               type="date"
@@ -526,12 +530,12 @@ function SettleDialog({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="s-note">Note (optional)</Label>
+            <Label htmlFor="s-note">{t.settleUp.noteLabel}</Label>
             <Input
               id="s-note"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Venmo, cash, …"
+              placeholder={t.settleUp.notePlaceholder}
             />
           </div>
 
@@ -540,7 +544,7 @@ function SettleDialog({
               type="submit"
               disabled={saving || amountNum <= 0 || !toUserId}
             >
-              {saving ? "Saving…" : "Record payment"}
+              {saving ? t.settleUp.saving : t.settleUp.recordPayment}
             </Button>
           </DialogFooter>
         </form>

@@ -21,6 +21,9 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import { useT } from "@/components/i18n-provider";
+import { errorText } from "@/lib/action-result";
+import { format } from "@/lib/i18n/config";
 
 type PendingInvite = { id: string; email: string | null; token: string };
 
@@ -47,12 +50,13 @@ export function MembersPanel({
   currentUserId: string;
   ownerId: string;
 }) {
+  const t = useT();
   return (
     <div className="flex flex-col gap-5">
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-muted-foreground">
-            Members ({members.length})
+            {format(t.membersPanel.membersCount, { count: members.length })}
           </h2>
           <InviteDialog groupId={groupId} />
         </div>
@@ -74,7 +78,7 @@ export function MembersPanel({
       {invites.length > 0 && (
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-muted-foreground">
-            Pending invites
+            {t.membersPanel.pendingInvites}
           </h2>
           <Card className="gap-0 p-0">
             <ul className="divide-y">
@@ -104,6 +108,7 @@ function MemberRow({
   isCurrentUser: boolean;
   isOwner: boolean;
 }) {
+  const t = useT();
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(member.name);
@@ -120,11 +125,11 @@ function MemberRow({
     startTransition(async () => {
       const res = await updateMemberName({ groupId, name: next });
       if (res.ok) {
-        toast.success("Name updated");
+        toast.success(t.membersPanel.nameUpdated);
         setEditing(false);
         router.refresh();
       } else {
-        toast.error(res.error);
+        toast.error(errorText(t, res.error));
       }
     });
   }
@@ -150,7 +155,7 @@ function MemberRow({
             className="h-8"
           />
           <Button type="submit" size="sm" disabled={pending}>
-            Save
+            {t.common.save}
           </Button>
           <Button
             type="button"
@@ -162,7 +167,7 @@ function MemberRow({
               setName(member.name);
             }}
           >
-            Cancel
+            {t.common.cancel}
           </Button>
         </form>
       ) : (
@@ -171,19 +176,22 @@ function MemberRow({
             <p className="truncate text-sm font-medium">
               {member.name}
               {isCurrentUser && (
-                <span className="text-muted-foreground"> (You)</span>
+                <span className="text-muted-foreground">
+                  {" "}
+                  {t.membersPanel.youSuffix}
+                </span>
               )}
             </p>
             <p className="truncate text-xs text-muted-foreground">
               {member.email}
             </p>
           </div>
-          {isOwner && <Badge variant="secondary">Owner</Badge>}
+          {isOwner && <Badge variant="secondary">{t.membersPanel.owner}</Badge>}
           {isCurrentUser && (
             <button
               onClick={() => setEditing(true)}
               className="rounded-md p-1 text-muted-foreground hover:text-foreground"
-              aria-label="Edit your name"
+              aria-label={t.membersPanel.editYourName}
             >
               <Pencil className="size-4" />
             </button>
@@ -206,6 +214,7 @@ function PendingInviteRow({
   invite: PendingInvite;
   groupId: string;
 }) {
+  const t = useT();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [copied, setCopied] = useState(false);
@@ -213,7 +222,7 @@ function PendingInviteRow({
   async function copy() {
     await navigator.clipboard.writeText(inviteLink(invite.token));
     setCopied(true);
-    toast.success("Invite link copied");
+    toast.success(t.membersPanel.inviteLinkCopied);
     setTimeout(() => setCopied(false), 1500);
   }
 
@@ -221,10 +230,10 @@ function PendingInviteRow({
     startTransition(async () => {
       const res = await revokeInvite(invite.id, groupId);
       if (res.ok) {
-        toast.success("Invite revoked");
+        toast.success(t.membersPanel.inviteRevoked);
         router.refresh();
       } else {
-        toast.error(res.error);
+        toast.error(errorText(t, res.error));
       }
     });
   }
@@ -233,17 +242,17 @@ function PendingInviteRow({
     <li className="flex items-center gap-2 px-4 py-3">
       <Mail className="size-4 text-muted-foreground" />
       <span className="flex-1 truncate text-sm">
-        {invite.email || "Anyone with the link"}
+        {invite.email || t.membersPanel.anyoneWithLink}
       </span>
       <Button size="sm" variant="ghost" onClick={copy}>
         {copied ? <Check className="size-4" /> : <Copy className="size-4" />}
-        Link
+        {t.membersPanel.link}
       </Button>
       <button
         onClick={revoke}
         disabled={pending}
         className="rounded-md p-1 text-muted-foreground hover:text-rose-500"
-        aria-label="Revoke invite"
+        aria-label={t.membersPanel.revokeInvite}
       >
         <X className="size-4" />
       </button>
@@ -252,6 +261,7 @@ function PendingInviteRow({
 }
 
 function InviteDialog({ groupId }: { groupId: string }) {
+  const t = useT();
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [pending, startTransition] = useTransition();
@@ -265,10 +275,10 @@ function InviteDialog({ groupId }: { groupId: string }) {
       const res = await createInvite({ groupId, email });
       if (res.ok) {
         setLink(inviteLink(res.data.token));
-        toast.success("Invite link created");
+        toast.success(t.membersPanel.inviteLinkCreated);
         router.refresh();
       } else {
-        toast.error(res.error);
+        toast.error(errorText(t, res.error));
       }
     });
   }
@@ -294,36 +304,32 @@ function InviteDialog({ groupId }: { groupId: string }) {
       <DialogTrigger asChild>
         <Button size="sm">
           <UserPlus className="size-4" />
-          Invite
+          {t.membersPanel.invite}
         </Button>
       </DialogTrigger>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>Invite someone</DialogTitle>
-          <DialogDescription>
-            Create a link to share. They sign in with Google to join — the link
-            works for 7 days.
-          </DialogDescription>
+          <DialogTitle>{t.membersPanel.inviteTitle}</DialogTitle>
+          <DialogDescription>{t.membersPanel.inviteDescription}</DialogDescription>
         </DialogHeader>
 
         {!link ? (
           <form onSubmit={onCreate} className="flex flex-col gap-4">
             <div className="flex flex-col gap-2">
-              <Label htmlFor="invite-email">Email (optional)</Label>
+              <Label htmlFor="invite-email">{t.membersPanel.emailLabel}</Label>
               <Input
                 id="invite-email"
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
-                placeholder="friend@example.com"
+                placeholder={t.membersPanel.emailPlaceholder}
               />
               <p className="text-xs text-muted-foreground">
-                Leave blank and anyone with the link can join. Set an email to
-                lock the link to that one person.
+                {t.membersPanel.emailHelp}
               </p>
             </div>
             <Button type="submit" disabled={pending}>
-              {pending ? "Creating…" : "Create invite link"}
+              {pending ? t.membersPanel.creating : t.membersPanel.createInviteLink}
             </Button>
           </form>
         ) : (
@@ -334,7 +340,7 @@ function InviteDialog({ groupId }: { groupId: string }) {
                 size="icon"
                 variant="secondary"
                 onClick={copy}
-                aria-label="Copy invite link"
+                aria-label={t.membersPanel.copyInviteLink}
               >
                 {copied ? (
                   <Check className="size-4" />
@@ -344,7 +350,7 @@ function InviteDialog({ groupId }: { groupId: string }) {
               </Button>
             </div>
             <Button variant="outline" onClick={() => onOpenChange(false)}>
-              Done
+              {t.common.done}
             </Button>
           </div>
         )}

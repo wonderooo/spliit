@@ -1,6 +1,7 @@
 import Link from "next/link";
 import { notFound, redirect } from "next/navigation";
 import { requireUser } from "@/lib/session";
+import { getDictionary } from "@/lib/i18n/dictionary";
 import { getGroup, getMembership } from "@/lib/queries";
 import { GroupTabs } from "@/components/group-tabs";
 import { ChevronLeft } from "lucide-react";
@@ -14,6 +15,7 @@ export default async function GroupLayout({
 }) {
   const { id } = await params;
   const user = await requireUser();
+  const dict = await getDictionary();
 
   const group = await getGroup(id);
   if (!group) notFound();
@@ -28,7 +30,7 @@ export default async function GroupLayout({
         className="inline-flex items-center gap-1 text-sm text-muted-foreground hover:text-foreground"
       >
         <ChevronLeft className="size-4" />
-        All groups
+        {dict.pages.group.allGroups}
       </Link>
       <div>
         <h1 className="text-2xl font-bold tracking-tight">{group.name}</h1>

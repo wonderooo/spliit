@@ -1,8 +1,11 @@
 import { redirect } from "next/navigation";
 import { getSession } from "@/lib/session";
+import { getDictionary } from "@/lib/i18n/dictionary";
 import { ShaderHero } from "@/components/shader-hero";
 import { Logo } from "@/components/logo";
 import { SignInButton } from "@/components/sign-in-button";
+import { LanguageMenu } from "@/components/language-switcher";
+import { ThemeToggle } from "@/components/theme-toggle";
 import { GradientHeading } from "@/components/ui/gradient-heading";
 import TextAnimate from "@/components/ui/text-animate";
 import {
@@ -19,68 +22,15 @@ import {
   Smartphone,
 } from "lucide-react";
 
-const features = [
-  {
-    icon: Scale,
-    title: "Split any way",
-    body: "Equally, by exact amounts, percentage, or shares. The math always balances to the cent — and it tells you the moment it doesn't.",
-  },
-  {
-    icon: Globe,
-    title: "Any currency",
-    body: "Log an expense in euros, yen, or rupiah. Daily exchange rates are fetched automatically and you can override them anytime.",
-  },
-  {
-    icon: Wallet,
-    title: "Smart settle-up",
-    body: "See who owes whom at a glance, plus the fewest payments needed to clear every debt. Record a payment and balances zero out.",
-  },
-  {
-    icon: Users,
-    title: "Shared groups",
-    body: "Spin up a group for a trip, flat, or dinner crew. Share one link — everyone joins and sees the same running tab.",
-  },
-];
-
-const steps = [
-  {
-    n: "1",
-    title: "Create a group",
-    body: "Name it, pick a base currency, invite your crew with a link.",
-  },
-  {
-    n: "2",
-    title: "Add or scan expenses",
-    body: "Type an expense, or snap the receipt and let Spliit do the typing.",
-  },
-  {
-    n: "3",
-    title: "Settle up",
-    body: "See who owes what and clear it in the fewest payments possible.",
-  },
-];
-
-const installSteps = [
-  {
-    icon: Share,
-    title: "Tap Share",
-    body: "Open spliit in Safari, then tap the Share button in the toolbar (the square with an arrow).",
-  },
-  {
-    icon: SquarePlus,
-    title: "Add to Home Screen",
-    body: "Scroll the share sheet and choose “Add to Home Screen.”",
-  },
-  {
-    icon: Check,
-    title: "Tap Add",
-    body: "Confirm with “Add.” Spliit lands on your home screen with its own icon.",
-  },
-];
+const featureIcons = [Scale, Globe, Wallet, Users];
+const installIcons = [Share, SquarePlus, Check];
 
 export default async function LandingPage() {
   const session = await getSession();
   if (session?.user) redirect("/dashboard");
+
+  const dict = await getDictionary();
+  const t = dict.home;
 
   return (
     <main className="relative flex flex-col">
@@ -88,11 +38,15 @@ export default async function LandingPage() {
       <section className="relative flex min-h-[90svh] flex-col items-center justify-center overflow-hidden px-5 py-16 text-center">
         <ShaderHero />
         <div className="absolute inset-0 bg-black/30" aria-hidden />
+        <div className="absolute right-3 top-3 z-20 flex items-center gap-1 text-white [&_button]:text-white/90 [&_button:hover]:text-white">
+          <LanguageMenu />
+          <ThemeToggle />
+        </div>
         <div className="relative z-10 flex max-w-2xl flex-col items-center gap-6">
           <Logo className="size-16 rounded-2xl shadow-xl ring-white/20" />
           <span className="inline-flex items-center gap-1.5 rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur">
             <Sparkles className="size-3.5" />
-            Now with AI receipt scanning
+            {t.badge}
           </span>
           <GradientHeading
             size="xxl"
@@ -103,42 +57,31 @@ export default async function LandingPage() {
             Spliit
           </GradientHeading>
           <TextAnimate
-            text="Track group spending, split it fairly, settle up in seconds."
+            text={t.tagline}
             type="fadeIn"
             className="text-balance text-lg font-medium text-white/90 sm:text-xl"
           />
           <div className="mt-2 flex flex-col items-center gap-3">
             <SignInButton size="lg" className="h-12 px-6 text-base shadow-xl" />
-            <p className="text-xs text-white/70">
-              Free to use. Sign in with Google to get started.
-            </p>
+            <p className="text-xs text-white/70">{t.ctaNote}</p>
           </div>
         </div>
       </section>
 
-      {/* Receipt scanning — the headline feature */}
+      {/* Receipt scanning - the headline feature */}
       <section className="border-t bg-background px-5 py-20 sm:py-24">
         <div className="mx-auto grid w-full max-w-5xl items-center gap-12 lg:grid-cols-2">
           <div className="flex flex-col gap-5">
             <span className="inline-flex w-fit items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               <ScanLine className="size-3.5" />
-              Receipt scanning
+              {t.receipt.label}
             </span>
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Snap the receipt. Skip the typing.
+              {t.receipt.title}
             </h2>
-            <p className="text-pretty text-muted-foreground">
-              Point your camera at any receipt and Spliit reads it for you —
-              every line item, the prices, tax and tip, even the currency.
-              Tap who shared each dish and it splits to the exact cent.
-            </p>
+            <p className="text-pretty text-muted-foreground">{t.receipt.body}</p>
             <ul className="flex flex-col gap-2.5 text-sm">
-              {[
-                "Reads items, prices, tax, tip and total automatically",
-                "Detects the currency from the receipt",
-                "Assign each item to the people who shared it",
-                "Applies as an exact split — no mental math",
-              ].map((line) => (
+              {t.receipt.points.map((line) => (
                 <li key={line} className="flex items-start gap-2.5">
                   <Check className="mt-0.5 size-4 shrink-0 text-primary" />
                   <span>{line}</span>
@@ -162,7 +105,7 @@ export default async function LandingPage() {
                 </div>
                 <span className="inline-flex items-center gap-1 rounded-full bg-gradient-to-br from-violet-500 to-fuchsia-500 px-2 py-1 text-[11px] font-semibold text-white">
                   <Sparkles className="size-3" />
-                  Scanned
+                  {t.receipt.scanned}
                 </span>
               </div>
               <div className="border-t border-dashed pt-3 font-mono text-sm">
@@ -181,13 +124,17 @@ export default async function LandingPage() {
                   </div>
                 ))}
                 <div className="mt-2 flex justify-between border-t border-dashed pt-2 font-semibold">
-                  <span>Total</span>
+                  <span>{t.receipt.total}</span>
                   <span className="tabular-nums">€90.00</span>
                 </div>
               </div>
               <div className="mt-4 flex items-center justify-between rounded-xl bg-muted/50 p-3 text-sm">
-                <span className="text-muted-foreground">Split 2 ways</span>
-                <span className="font-semibold tabular-nums">€45.00 each</span>
+                <span className="text-muted-foreground">
+                  {t.receipt.splitWays}
+                </span>
+                <span className="font-semibold tabular-nums">
+                  {t.receipt.each}
+                </span>
               </div>
             </div>
           </div>
@@ -199,25 +146,28 @@ export default async function LandingPage() {
         <div className="mx-auto w-full max-w-5xl">
           <div className="mx-auto mb-12 max-w-xl text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Everything you need to split fairly
+              {t.features.title}
             </h2>
-            <p className="mt-3 text-muted-foreground">
-              From a two-person dinner to a two-week trip with the whole crew.
-            </p>
+            <p className="mt-3 text-muted-foreground">{t.features.subtitle}</p>
           </div>
           <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
-            {features.map((f) => (
-              <div
-                key={f.title}
-                className="rounded-2xl border bg-card p-6 transition-colors hover:border-foreground/20"
-              >
-                <div className="mb-4 inline-flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <f.icon className="size-5" />
+            {t.features.items.map((f, i) => {
+              const Icon = featureIcons[i];
+              return (
+                <div
+                  key={f.title}
+                  className="rounded-2xl border bg-card p-6 transition-colors hover:border-foreground/20"
+                >
+                  <div className="mb-4 inline-flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="size-5" />
+                  </div>
+                  <h3 className="text-lg font-semibold">{f.title}</h3>
+                  <p className="mt-1.5 text-sm text-muted-foreground">
+                    {f.body}
+                  </p>
                 </div>
-                <h3 className="text-lg font-semibold">{f.title}</h3>
-                <p className="mt-1.5 text-sm text-muted-foreground">{f.body}</p>
-              </div>
-            ))}
+              );
+            })}
           </div>
         </div>
       </section>
@@ -227,14 +177,14 @@ export default async function LandingPage() {
         <div className="mx-auto w-full max-w-5xl">
           <div className="mx-auto mb-12 max-w-xl text-center">
             <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-              Up and running in three steps
+              {t.steps.title}
             </h2>
           </div>
           <ol className="grid grid-cols-1 gap-6 sm:grid-cols-3">
-            {steps.map((s) => (
-              <li key={s.n} className="flex flex-col gap-3">
+            {t.steps.items.map((s, i) => (
+              <li key={s.title} className="flex flex-col gap-3">
                 <span className="inline-flex size-10 items-center justify-center rounded-full bg-gradient-to-br from-violet-500 via-fuchsia-500 to-blue-500 font-bold text-white">
-                  {s.n}
+                  {i + 1}
                 </span>
                 <h3 className="text-lg font-semibold">{s.title}</h3>
                 <p className="text-sm text-muted-foreground">{s.body}</p>
@@ -250,36 +200,35 @@ export default async function LandingPage() {
           <div className="mx-auto mb-12 max-w-xl text-center">
             <span className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1 text-xs font-semibold text-primary">
               <Smartphone className="size-3.5" />
-              Install on iPhone
+              {t.install.label}
             </span>
             <h2 className="mt-4 text-3xl font-bold tracking-tight sm:text-4xl">
-              Add Spliit to your home screen
+              {t.install.title}
             </h2>
-            <p className="mt-3 text-muted-foreground">
-              No App Store needed. Install it from Safari and it opens
-              full-screen with its own icon — just like a native app.
-            </p>
+            <p className="mt-3 text-muted-foreground">{t.install.body}</p>
           </div>
           <ol className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-            {installSteps.map((s, i) => (
-              <li
-                key={s.title}
-                className="relative flex flex-col gap-3 rounded-2xl border bg-card p-6"
-              >
-                <span className="absolute right-5 top-5 text-sm font-semibold text-muted-foreground/50">
-                  {i + 1}
-                </span>
-                <div className="inline-flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
-                  <s.icon className="size-5" />
-                </div>
-                <h3 className="text-base font-semibold">{s.title}</h3>
-                <p className="text-sm text-muted-foreground">{s.body}</p>
-              </li>
-            ))}
+            {t.install.items.map((s, i) => {
+              const Icon = installIcons[i];
+              return (
+                <li
+                  key={s.title}
+                  className="relative flex flex-col gap-3 rounded-2xl border bg-card p-6"
+                >
+                  <span className="absolute right-5 top-5 text-sm font-semibold text-muted-foreground/50">
+                    {i + 1}
+                  </span>
+                  <div className="inline-flex size-11 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                    <Icon className="size-5" />
+                  </div>
+                  <h3 className="text-base font-semibold">{s.title}</h3>
+                  <p className="text-sm text-muted-foreground">{s.body}</p>
+                </li>
+              );
+            })}
           </ol>
           <p className="mt-6 text-center text-xs text-muted-foreground">
-            On Android, open the browser menu and choose “Install app” or “Add
-            to Home screen.”
+            {t.install.android}
           </p>
         </div>
       </section>
@@ -289,15 +238,13 @@ export default async function LandingPage() {
         <div className="mx-auto flex w-full max-w-2xl flex-col items-center gap-6 text-center">
           <Logo className="size-12 rounded-xl" />
           <h2 className="text-3xl font-bold tracking-tight sm:text-4xl">
-            Ready to split fairly?
+            {t.finalCta.title}
           </h2>
-          <p className="text-muted-foreground">
-            Free to use. Create your first group in under a minute.
-          </p>
+          <p className="text-muted-foreground">{t.finalCta.body}</p>
           <SignInButton size="lg" className="h-12 px-6 text-base" />
           <p className="flex items-center gap-1.5 text-xs text-muted-foreground">
             <ShieldCheck className="size-3.5" />
-            Sign in with Google — no card, no spam.
+            {t.finalCta.note}
           </p>
         </div>
       </section>
@@ -309,12 +256,8 @@ export default async function LandingPage() {
             <Logo className="size-7 rounded-lg" />
             <span className="font-bold tracking-tight">Spliit</span>
           </div>
-          <p className="text-sm text-muted-foreground">
-            Splits your bills, not your friendships.
-          </p>
-          <p className="text-xs text-muted-foreground">
-            © 2026 Spliit. All rights reserved.
-          </p>
+          <p className="text-sm text-muted-foreground">{t.footer.tagline}</p>
+          <p className="text-xs text-muted-foreground">{t.footer.copyright}</p>
         </div>
       </footer>
     </main>

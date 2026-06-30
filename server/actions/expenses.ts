@@ -9,31 +9,36 @@ import { getGroup, getGroupMembers, getMembership } from "@/lib/queries";
 import { createExpenseSchema } from "@/lib/validators";
 import { toMinorUnits, convertMinorUnits } from "@/lib/currency";
 import { computeSplits } from "@/lib/splits";
-import { ok, fail, type ActionResult } from "@/lib/action-result";
+import {
+  ok,
+  fail,
+  type ActionResult,
+  type ActionErrorCode,
+} from "@/lib/action-result";
 
 export async function createExpense(input: unknown): Promise<ActionResult> {
   const session = await getSession();
-  if (!session?.user) return fail("You must be signed in.");
+  if (!session?.user) return fail("notSignedIn");
 
   const parsed = createExpenseSchema.safeParse(input);
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Invalid input.");
+    return fail((parsed.error.issues[0]?.message as ActionErrorCode) ?? "invalidInput");
   }
   const data = parsed.data;
 
   const membership = await getMembership(data.groupId, session.user.id);
-  if (!membership) return fail("You are not a member of this group.");
+  if (!membership) return fail("notAMember");
 
   const group = await getGroup(data.groupId);
-  if (!group) return fail("Group not found.");
+  if (!group) return fail("groupNotFound");
 
   const members = await getGroupMembers(data.groupId);
   const memberIds = new Set(members.map((m) => m.id));
   if (!memberIds.has(data.paidBy)) {
-    return fail("Payer must be a group member.");
+    return fail("payerNotMember");
   }
   if (!data.splits.every((s) => memberIds.has(s.userId))) {
-    return fail("All participants must be group members.");
+    return fail("participantsNotMembers");
   }
 
   // Amount in minor units of the expense currency.
@@ -52,7 +57,7 @@ export async function createExpense(input: unknown): Promise<ActionResult> {
   try {
     computed = computeSplits(totalMinor, data.splitType, participants);
   } catch (e) {
-    return fail(e instanceof Error ? e.message : "Could not split the expense.");
+    return fail((e instanceof Error ? (e.message as ActionErrorCode) : "unknown"));
   }
 
   const baseAmount = convertMinorUnits(
@@ -99,34 +104,34 @@ export async function updateExpense(
   input: unknown,
 ): Promise<ActionResult> {
   const session = await getSession();
-  if (!session?.user) return fail("You must be signed in.");
+  if (!session?.user) return fail("notSignedIn");
 
   const parsed = createExpenseSchema.safeParse(input);
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Invalid input.");
+    return fail((parsed.error.issues[0]?.message as ActionErrorCode) ?? "invalidInput");
   }
   const data = parsed.data;
 
   const membership = await getMembership(data.groupId, session.user.id);
-  if (!membership) return fail("You are not a member of this group.");
+  if (!membership) return fail("notAMember");
 
   const group = await getGroup(data.groupId);
-  if (!group) return fail("Group not found.");
+  if (!group) return fail("groupNotFound");
 
   const existing = await db
     .select({ id: expenses.id })
     .from(expenses)
     .where(and(eq(expenses.id, expenseId), eq(expenses.groupId, data.groupId)))
     .limit(1);
-  if (existing.length === 0) return fail("Expense not found.");
+  if (existing.length === 0) return fail("expenseNotFound");
 
   const members = await getGroupMembers(data.groupId);
   const memberIds = new Set(members.map((m) => m.id));
   if (!memberIds.has(data.paidBy)) {
-    return fail("Payer must be a group member.");
+    return fail("payerNotMember");
   }
   if (!data.splits.every((s) => memberIds.has(s.userId))) {
-    return fail("All participants must be group members.");
+    return fail("participantsNotMembers");
   }
 
   const totalMinor = toMinorUnits(data.amount, data.currency);
@@ -143,7 +148,7 @@ export async function updateExpense(
   try {
     computed = computeSplits(totalMinor, data.splitType, participants);
   } catch (e) {
-    return fail(e instanceof Error ? e.message : "Could not split the expense.");
+    return fail((e instanceof Error ? (e.message as ActionErrorCode) : "unknown"));
   }
 
   const baseAmount = convertMinorUnits(
@@ -189,10 +194,10 @@ export async function deleteExpense(
   groupId: string,
 ): Promise<ActionResult> {
   const session = await getSession();
-  if (!session?.user) return fail("You must be signed in.");
+  if (!session?.user) return fail("notSignedIn");
 
   const membership = await getMembership(groupId, session.user.id);
-  if (!membership) return fail("You are not a member of this group.");
+  if (!membership) return fail("notAMember");
 
   await db.delete(expenses).where(eq(expenses.id, expenseId));
 

@@ -7,7 +7,12 @@ import { invitations, groupMembers } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getMembership } from "@/lib/queries";
 import { inviteSchema, memberNameSchema } from "@/lib/validators";
-import { ok, fail, type ActionResult } from "@/lib/action-result";
+import {
+  ok,
+  fail,
+  type ActionResult,
+  type ActionErrorCode,
+} from "@/lib/action-result";
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
 
@@ -15,16 +20,16 @@ export async function createInvite(
   input: unknown,
 ): Promise<ActionResult<{ token: string }>> {
   const session = await getSession();
-  if (!session?.user) return fail("You must be signed in.");
+  if (!session?.user) return fail("notSignedIn");
 
   const parsed = inviteSchema.safeParse(input);
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Invalid input.");
+    return fail((parsed.error.issues[0]?.message as ActionErrorCode) ?? "invalidInput");
   }
   const { groupId, email } = parsed.data;
 
   const membership = await getMembership(groupId, session.user.id);
-  if (!membership) return fail("You are not a member of this group.");
+  if (!membership) return fail("notAMember");
 
   const token = crypto.randomUUID();
   await db.insert(invitations).values({
@@ -45,14 +50,14 @@ export async function acceptInvite(
   name?: string,
 ): Promise<ActionResult<{ groupId: string; alreadyMember: boolean }>> {
   const session = await getSession();
-  if (!session?.user) return fail("You must be signed in.");
+  if (!session?.user) return fail("notSignedIn");
 
   // The display name is optional; fall back to the account name when absent.
   let memberName: string | null = null;
   if (name !== undefined && name.trim() !== "") {
     const parsedName = memberNameSchema.safeParse(name);
     if (!parsedName.success) {
-      return fail(parsedName.error.issues[0]?.message ?? "Invalid name.");
+      return fail((parsedName.error.issues[0]?.message as ActionErrorCode) ?? "invalidInput");
     }
     memberName = parsedName.data;
   }
@@ -64,15 +69,15 @@ export async function acceptInvite(
     .limit(1);
 
   const invite = rows[0];
-  if (!invite) return fail("This invite link is invalid.");
-  if (invite.status === "revoked") return fail("This invite has been revoked.");
+  if (!invite) return fail("inviteInvalid");
+  if (invite.status === "revoked") return fail("inviteRevoked");
   // An open (email-less) link stays "pending" so the whole crew can join with
   // the same URL. Only an email-scoped invite flips to "accepted" once its one
   // recipient joins — so "accepted" is the only status that closes a link.
   if (invite.status === "accepted")
-    return fail("This invite has already been used.");
+    return fail("inviteUsed");
   if (invite.expiresAt.getTime() < Date.now()) {
-    return fail("This invite link has expired.");
+    return fail("inviteExpired");
   }
 
   // Email-scoped invite: only the addressed account may accept it.
@@ -80,7 +85,7 @@ export async function acceptInvite(
     invite.email &&
     invite.email.toLowerCase() !== session.user.email.toLowerCase()
   ) {
-    return fail("This invite was sent to a different email address.");
+    return fail("inviteWrongEmail");
   }
 
   const existing = await getMembership(invite.groupId, session.user.id);
@@ -114,10 +119,10 @@ export async function revokeInvite(
   groupId: string,
 ): Promise<ActionResult> {
   const session = await getSession();
-  if (!session?.user) return fail("You must be signed in.");
+  if (!session?.user) return fail("notSignedIn");
 
   const membership = await getMembership(groupId, session.user.id);
-  if (!membership) return fail("You are not a member of this group.");
+  if (!membership) return fail("notAMember");
 
   await db
     .update(invitations)

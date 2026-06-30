@@ -5,17 +5,22 @@ import { db } from "@/lib/db";
 import { groups, groupMembers } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { createGroupSchema } from "@/lib/validators";
-import { ok, fail, type ActionResult } from "@/lib/action-result";
+import {
+  ok,
+  fail,
+  type ActionResult,
+  type ActionErrorCode,
+} from "@/lib/action-result";
 
 export async function createGroup(
   input: unknown,
 ): Promise<ActionResult<{ id: string }>> {
   const session = await getSession();
-  if (!session?.user) return fail("You must be signed in.");
+  if (!session?.user) return fail("notSignedIn");
 
   const parsed = createGroupSchema.safeParse(input);
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Invalid input.");
+    return fail((parsed.error.issues[0]?.message as ActionErrorCode) ?? "invalidInput");
   }
   const { name, description, baseCurrency } = parsed.data;
 

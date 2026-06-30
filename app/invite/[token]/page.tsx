@@ -1,4 +1,6 @@
 import { getSession } from "@/lib/session";
+import { getDictionary } from "@/lib/i18n/dictionary";
+import { format } from "@/lib/i18n/config";
 import { getInviteContext } from "@/lib/queries";
 import { SignInButton } from "@/components/sign-in-button";
 import { AcceptInvite } from "@/components/accept-invite";
@@ -11,6 +13,7 @@ export default async function InvitePage({
   params: Promise<{ token: string }>;
 }) {
   const { token } = await params;
+  const dict = await getDictionary();
   const [session, invite] = await Promise.all([
     getSession(),
     getInviteContext(token),
@@ -19,10 +22,10 @@ export default async function InvitePage({
   // Unknown / revoked / expired links: a clear dead end, no join button.
   if (!invite || !invite.usable) {
     const reason = !invite
-      ? "This invite link is invalid."
+      ? dict.pages.invite.reasonInvalid
       : invite.expired
-        ? "This invite link has expired."
-        : "This invite has been revoked.";
+        ? dict.pages.invite.reasonExpired
+        : dict.pages.invite.reasonRevoked;
     return (
       <main className="flex min-h-svh flex-col items-center justify-center px-5 py-16">
         <Card className="w-full max-w-sm items-center gap-4 p-8 text-center">
@@ -30,7 +33,9 @@ export default async function InvitePage({
             <Users className="size-6" />
           </div>
           <div>
-            <h1 className="text-xl font-bold">Invite unavailable</h1>
+            <h1 className="text-xl font-bold">
+              {dict.pages.invite.unavailableTitle}
+            </h1>
             <p className="mt-1 text-sm text-muted-foreground">{reason}</p>
           </div>
         </Card>
@@ -39,7 +44,11 @@ export default async function InvitePage({
   }
 
   const memberLabel =
-    invite.memberCount === 1 ? "1 member" : `${invite.memberCount} members`;
+    invite.memberCount === 1
+      ? format(dict.pages.invite.memberCountOne, { count: invite.memberCount })
+      : format(dict.pages.invite.memberCountMany, {
+          count: invite.memberCount,
+        });
 
   return (
     <main className="flex min-h-svh flex-col items-center justify-center px-5 py-16">
@@ -50,7 +59,9 @@ export default async function InvitePage({
         <div>
           <h1 className="text-xl font-bold">{invite.groupName}</h1>
           <p className="mt-1 text-sm text-muted-foreground">
-            {invite.inviterName} invited you to split expenses together.
+            {format(dict.pages.invite.invitedYou, {
+              name: invite.inviterName,
+            })}
           </p>
           <p className="mt-1 text-xs text-muted-foreground">
             {memberLabel} · {invite.baseCurrency}
@@ -62,7 +73,7 @@ export default async function InvitePage({
           <div className="flex flex-col items-center gap-2">
             <SignInButton callbackURL={`/invite/${token}`} />
             <p className="text-xs text-muted-foreground">
-              Sign in with Google to accept the invite.
+              {dict.auth.signInWithGoogle}
             </p>
           </div>
         )}

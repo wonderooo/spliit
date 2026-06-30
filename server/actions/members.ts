@@ -6,18 +6,23 @@ import { db } from "@/lib/db";
 import { groupMembers } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { updateMemberNameSchema } from "@/lib/validators";
-import { ok, fail, type ActionResult } from "@/lib/action-result";
+import {
+  ok,
+  fail,
+  type ActionResult,
+  type ActionErrorCode,
+} from "@/lib/action-result";
 
 /** Rename yourself within a group. The display name only affects this group. */
 export async function updateMemberName(
   input: unknown,
 ): Promise<ActionResult> {
   const session = await getSession();
-  if (!session?.user) return fail("You must be signed in.");
+  if (!session?.user) return fail("notSignedIn");
 
   const parsed = updateMemberNameSchema.safeParse(input);
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Invalid input.");
+    return fail((parsed.error.issues[0]?.message as ActionErrorCode) ?? "invalidInput");
   }
   const { groupId, name } = parsed.data;
 
@@ -32,7 +37,7 @@ export async function updateMemberName(
     )
     .returning({ id: groupMembers.id });
 
-  if (result.length === 0) return fail("You are not a member of this group.");
+  if (result.length === 0) return fail("notAMember");
 
   revalidatePath(`/groups/${groupId}`);
   revalidatePath(`/groups/${groupId}/members`);

@@ -1,0 +1,339 @@
+{
+  "meta": {
+    "title": "Spliit - dziel wydatki ze znajomymi",
+    "description": "Dziel wydatki z podróży i grup w dowolnej walucie, sprawdzaj kto komu ile jest winien i rozliczaj się jednym dotknięciem."
+  },
+  "common": {
+    "save": "Zapisz",
+    "cancel": "Anuluj",
+    "done": "Gotowe",
+    "back": "Wstecz",
+    "you": "Ty",
+    "loading": "Ładowanie…",
+    "language": "Język",
+    "toggleTheme": "Przełącz motyw",
+    "signOut": "Wyloguj się"
+  },
+  "nav": {
+    "expenses": "Wydatki",
+    "balances": "Salda",
+    "settle": "Rozlicz się",
+    "members": "Uczestnicy"
+  },
+  "auth": {
+    "continueWithGoogle": "Kontynuuj z Google",
+    "redirecting": "Przekierowywanie…",
+    "signInWithGoogle": "Zaloguj się przez Google, aby przyjąć zaproszenie."
+  },
+  "home": {
+    "badge": "Teraz ze skanowaniem paragonów AI",
+    "tagline": "Śledź wspólne wydatki, dziel je sprawiedliwie i rozliczaj w kilka sekund.",
+    "ctaNote": "Darmowe w użyciu. Zaloguj się przez Google, aby zacząć.",
+    "receipt": {
+      "label": "Skanowanie paragonów",
+      "title": "Zrób zdjęcie paragonu. Pomiń przepisywanie.",
+      "body": "Skieruj aparat na dowolny paragon, a Spliit odczyta go za Ciebie - każdą pozycję, ceny, podatek i napiwek, a nawet walutę. Wskaż, kto dzielił się którą potrawą, a kwota rozdzieli się co do grosza.",
+      "points": [
+        "Automatycznie odczytuje pozycje, ceny, podatek, napiwek i sumę",
+        "Wykrywa walutę z paragonu",
+        "Przypisz każdą pozycję osobom, które się nią dzieliły",
+        "Stosuje jako podział na dokładne kwoty - bez liczenia w głowie"
+      ],
+      "scanned": "Zeskanowano",
+      "total": "Suma",
+      "splitWays": "Podział na 2 osoby",
+      "each": "po 45,00 €"
+    },
+    "features": {
+      "title": "Wszystko, czego potrzebujesz, by dzielić sprawiedliwie",
+      "subtitle": "Od kolacji we dwoje po dwutygodniową podróż z całą ekipą.",
+      "items": [
+        {
+          "title": "Dziel dowolnie",
+          "body": "Po równo, dokładnymi kwotami, procentowo lub udziałami. Rachunki zawsze zgadzają się co do grosza - a aplikacja od razu poinformuje, gdy coś się nie zgadza."
+        },
+        {
+          "title": "Dowolna waluta",
+          "body": "Zapisz wydatek w euro, jenach czy rupiach. Dzienne kursy walut pobierane są automatycznie, a Ty możesz je w każdej chwili zmienić."
+        },
+        {
+          "title": "Sprytne rozliczenia",
+          "body": "Zobacz w mgnieniu oka, kto komu jest winien, oraz najmniejszą liczbę płatności potrzebnych do spłaty wszystkich długów. Zapisz płatność, a salda się wyzerują."
+        },
+        {
+          "title": "Wspólne grupy",
+          "body": "Załóż grupę na podróż, mieszkanie lub kolację. Udostępnij jeden link - wszyscy dołączają i widzą ten sam rachunek."
+        }
+      ]
+    },
+    "steps": {
+      "title": "Gotowe w trzech krokach",
+      "items": [
+        {
+          "title": "Załóż grupę",
+          "body": "Nadaj nazwę, wybierz walutę bazową i zaproś ekipę linkiem."
+        },
+        {
+          "title": "Dodaj lub zeskanuj wydatki",
+          "body": "Wpisz wydatek albo zrób zdjęcie paragonu i pozwól Spliit przepisać go za Ciebie."
+        },
+        {
+          "title": "Rozlicz się",
+          "body": "Zobacz, kto komu ile jest winien, i ureguluj to najmniejszą liczbą płatności."
+        }
+      ]
+    },
+    "install": {
+      "label": "Zainstaluj na iPhonie",
+      "title": "Dodaj Spliit do ekranu głównego",
+      "body": "Bez App Store. Zainstaluj z Safari, a aplikacja otworzy się na pełnym ekranie z własną ikoną - zupełnie jak natywna.",
+      "items": [
+        {
+          "title": "Dotknij Udostępnij",
+          "body": "Otwórz spliit w Safari, a następnie dotknij przycisku Udostępnij na pasku narzędzi (kwadrat ze strzałką)."
+        },
+        {
+          "title": "Dodaj do ekranu głównego",
+          "body": "Przewiń arkusz udostępniania i wybierz „Dodaj do ekranu głównego”."
+        },
+        {
+          "title": "Dotknij Dodaj",
+          "body": "Potwierdź, wybierając „Dodaj”. Spliit pojawi się na ekranie głównym z własną ikoną."
+        }
+      ],
+      "android": "Na Androidzie otwórz menu przeglądarki i wybierz „Zainstaluj aplikację” lub „Dodaj do ekranu głównego”."
+    },
+    "finalCta": {
+      "title": "Gotowy, by dzielić sprawiedliwie?",
+      "body": "Darmowe w użyciu. Załóż pierwszą grupę w niecałą minutę.",
+      "note": "Zaloguj się przez Google - bez karty, bez spamu."
+    },
+    "footer": {
+      "tagline": "Dzieli rachunki, nie przyjaźnie.",
+      "copyright": "© 2026 Spliit. Wszelkie prawa zastrzeżone."
+    }
+  },
+  "errors": {
+    "unknown": "Coś poszło nie tak. Spróbuj ponownie.",
+    "notSignedIn": "Musisz być zalogowany.",
+    "invalidInput": "Sprawdź formularz i spróbuj ponownie.",
+    "notAMember": "Nie jesteś uczestnikiem tej grupy.",
+    "groupNotFound": "Nie znaleziono grupy.",
+    "expenseNotFound": "Nie znaleziono wydatku.",
+    "payerNotMember": "Płatnik musi być uczestnikiem grupy.",
+    "participantsNotMembers": "Wszyscy w podziale muszą być uczestnikami grupy.",
+    "settlementSamePerson": "Płatnik i odbiorca muszą być różnymi osobami.",
+    "settlementNotMembers": "Obie osoby muszą być uczestnikami grupy.",
+    "inviteInvalid": "Ten link z zaproszeniem jest nieprawidłowy.",
+    "inviteRevoked": "To zaproszenie zostało cofnięte.",
+    "inviteUsed": "To zaproszenie zostało już wykorzystane.",
+    "inviteExpired": "Ten link z zaproszeniem wygasł.",
+    "inviteWrongEmail": "To zaproszenie wysłano na inny adres e-mail.",
+    "nameRequired": "Nazwa jest wymagana.",
+    "descriptionRequired": "Opis jest wymagany.",
+    "amountPositive": "Kwota musi być większa od zera.",
+    "invalidDate": "Nieprawidłowa data.",
+    "pickOnePerson": "Wybierz co najmniej jedną osobę.",
+    "splitWeightsPositive": "Udziały podziału muszą sumować się do liczby dodatniej.",
+    "splitNeedsParticipant": "Wydatek wymaga co najmniej jednego uczestnika.",
+    "amountNegative": "Kwota nie może być ujemna.",
+    "exactSumMismatch": "Dokładne kwoty muszą sumować się do całości.",
+    "percentagesSum100": "Procenty muszą sumować się do 100%.",
+    "sharesNegative": "Udziały nie mogą być ujemne.",
+    "unknownSplitType": "Nieznany typ podziału.",
+    "couldNotStartSignIn": "Nie udało się rozpocząć logowania. Spróbuj ponownie.",
+    "assignItemToSomeone": "Przypisz co najmniej jedną pozycję do kogoś.",
+    "pickRecipient": "Wybierz, kto otrzymał płatność."
+  },
+  "pages": {
+    "dashboard": {
+      "title": "Twoje grupy",
+      "newGroup": "Nowa grupa",
+      "overallBalance": "Saldo ogólne",
+      "youAreOwed": "masz do odebrania",
+      "youOwe": "jesteś winien",
+      "settledUp": "rozliczono",
+      "emptyTitle": "Brak grup",
+      "emptyBody": "Załóż grupę na kolejną podróż lub wspólne mieszkanie, aby zacząć dzielić wydatki.",
+      "createGroup": "Załóż grupę"
+    },
+    "newGroup": {
+      "title": "Nowa grupa"
+    },
+    "group": {
+      "allGroups": "Wszystkie grupy"
+    },
+    "balances": {
+      "someone": "Ktoś",
+      "balancesHeading": "Salda",
+      "settled": "rozliczono",
+      "getsBack": "odbiera",
+      "owes": "jest winien",
+      "suggestedPayments": "Sugerowane płatności",
+      "allSettledTitle": "Wszyscy są rozliczeni",
+      "allSettledBody": "W tej chwili nie są potrzebne żadne płatności."
+    },
+    "invite": {
+      "reasonInvalid": "Ten link z zaproszeniem jest nieprawidłowy.",
+      "reasonExpired": "Ten link z zaproszeniem wygasł.",
+      "reasonRevoked": "To zaproszenie zostało cofnięte.",
+      "unavailableTitle": "Zaproszenie niedostępne",
+      "memberCountOne": "{count} uczestnik",
+      "memberCountMany": "{count} uczestników",
+      "invitedYou": "{name} zaprasza Cię do wspólnego dzielenia wydatków."
+    }
+  },
+  "expenseForm": {
+    "splitEqually": "Po równo",
+    "splitExact": "Dokładnie",
+    "splitPercent": "Procentowo",
+    "splitShares": "Udziały",
+    "addExpense": "Dodaj wydatek",
+    "editExpense": "Edytuj wydatek",
+    "description": "Zapisz, co zostało zapłacone i jak to podzielić.",
+    "descriptionLabel": "Opis",
+    "descriptionPlaceholder": "Kolacja, taksówka, zakupy…",
+    "defaultDescription": "Paragon",
+    "amount": "Kwota",
+    "currency": "Waluta",
+    "rateLabel": "Kurs (1 {currency} → {baseCurrency})",
+    "rateHelp": "Uzupełniane automatycznie z dziennych kursów - zmień, jeśli użyłeś innego.",
+    "paidBy": "Zapłacił(a)",
+    "date": "Data",
+    "split": "Podział",
+    "includeMember": "Uwzględnij {name}",
+    "sharesPlaceholder": "udziały",
+    "amountPlaceholderWord": "kwota",
+    "saving": "Zapisywanie…",
+    "saveChanges": "Zapisz zmiany",
+    "couldNotSaveChanges": "Nie udało się zapisać zmian.",
+    "couldNotAddExpense": "Nie udało się dodać wydatku.",
+    "pickAtLeastOnePerson": "Wybierz co najmniej jedną osobę.",
+    "enterAnAmount": "Podaj kwotę.",
+    "splitEquallyEach": "Podział po równo - po {amount} na osobę.",
+    "amountsAddUp": "Kwoty się zgadzają.",
+    "missingAmount": "Brakuje {amount}.",
+    "overByAmount": "Za dużo o {amount}.",
+    "percentagesAddUp": "Procenty sumują się do 100%.",
+    "percentagesAddUpTo": "Procenty sumują się do {sum}% (potrzeba 100%).",
+    "splitByShares": "Podział według udziałów.",
+    "enterShareForOne": "Podaj udział dla co najmniej jednej osoby."
+  },
+  "expensesView": {
+    "added": "Dodano wydatek",
+    "updated": "Zaktualizowano wydatek",
+    "deleted": "Usunięto wydatek"
+  },
+  "expenseList": {
+    "splitEqually": "po równo",
+    "splitExact": "dokładnie",
+    "splitShares": "udziały",
+    "someone": "Ktoś",
+    "emptyTitle": "Brak wydatków",
+    "emptyBody": "Dodaj pierwszy wydatek, aby zacząć śledzić, kto komu ile jest winien.",
+    "paidBy": "{name} zapłacił(a)",
+    "actions": "Działania na wydatku",
+    "edit": "Edytuj",
+    "delete": "Usuń",
+    "deleteTitle": "Usunąć ten wydatek?",
+    "deleteBody": "„{description}” ({amount}) zostanie usunięty dla wszystkich. Tej operacji nie można cofnąć."
+  },
+  "createGroup": {
+    "created": "Utworzono grupę",
+    "nameLabel": "Nazwa grupy",
+    "namePlaceholder": "Bali 2026",
+    "descriptionLabel": "Opis (opcjonalnie)",
+    "descriptionPlaceholder": "Dwa tygodnie, czworo znajomych, jeden budżet.",
+    "currencyLabel": "Waluta bazowa",
+    "currencyHelp": "Salda są pokazywane w tej walucie. Wydatki nadal można dodawać w dowolnej walucie.",
+    "creating": "Tworzenie…",
+    "submit": "Załóż grupę"
+  },
+  "settleUp": {
+    "someone": "Ktoś",
+    "paymentRecorded": "Zapisano płatność",
+    "paymentRemoved": "Usunięto płatność",
+    "suggestedPayments": "Sugerowane płatności",
+    "recordPayment": "Zapisz płatność",
+    "allSettledUp": "Wszystko rozliczone",
+    "nothingToPay": "W tej chwili nie ma nic do spłaty.",
+    "settle": "Rozlicz",
+    "paymentHistory": "Historia płatności",
+    "deletePayment": "Usuń płatność",
+    "couldNotRecord": "Nie udało się zapisać płatności.",
+    "dialogTitle": "Zapisz płatność",
+    "dialogDescription": "Zapisz pieniądze, które zmieniły właściciela, aby uregulować dług.",
+    "from": "Od",
+    "to": "Do",
+    "selectPlaceholder": "Wybierz",
+    "amount": "Kwota",
+    "currency": "Waluta",
+    "rateLabel": "Kurs (1 {currency} → {baseCurrency})",
+    "date": "Data",
+    "noteLabel": "Notatka (opcjonalnie)",
+    "notePlaceholder": "BLIK, gotówka, …",
+    "saving": "Zapisywanie…"
+  },
+  "membersPanel": {
+    "membersCount": "Uczestnicy ({count})",
+    "pendingInvites": "Oczekujące zaproszenia",
+    "nameUpdated": "Zaktualizowano nazwę",
+    "youSuffix": "(Ty)",
+    "owner": "Właściciel",
+    "editYourName": "Edytuj swoją nazwę",
+    "inviteLinkCopied": "Skopiowano link z zaproszeniem",
+    "inviteRevoked": "Cofnięto zaproszenie",
+    "anyoneWithLink": "Każdy z linkiem",
+    "link": "Link",
+    "revokeInvite": "Cofnij zaproszenie",
+    "inviteLinkCreated": "Utworzono link z zaproszeniem",
+    "invite": "Zaproś",
+    "inviteTitle": "Zaproś kogoś",
+    "inviteDescription": "Utwórz link do udostępnienia. Aby dołączyć, logują się przez Google - link działa przez 7 dni.",
+    "emailLabel": "E-mail (opcjonalnie)",
+    "emailPlaceholder": "znajomy@example.com",
+    "emailHelp": "Zostaw puste, a dołączyć może każdy z linkiem. Podaj e-mail, aby przypisać link do jednej osoby.",
+    "creating": "Tworzenie…",
+    "createInviteLink": "Utwórz link z zaproszeniem",
+    "copyInviteLink": "Skopiuj link z zaproszeniem"
+  },
+  "acceptInvite": {
+    "alreadyMember": "Jesteś już w tej grupie",
+    "joined": "Dołączyłeś do grupy",
+    "nameLabel": "Twoja nazwa w tej grupie",
+    "namePlaceholder": "np. Alex",
+    "nameHelp": "Tak będziesz widoczny dla grupy. Możesz to później zmienić.",
+    "joining": "Dołączanie…",
+    "joinGroup": "Dołącz do grupy"
+  },
+  "receipt": {
+    "stageReading": "Odczytywanie paragonu…",
+    "stageFinding": "Wyszukiwanie pozycji i cen…",
+    "stageDetecting": "Wykrywanie waluty…",
+    "stageAdding": "Podliczanie…",
+    "scanFailed": "Nie udało się zeskanować tego zdjęcia.",
+    "noItemsDetected": "Nie wykryto pozycji - dodaj je ręcznie poniżej.",
+    "appliedAsExactSplit": "Zastosowano paragon jako podział na dokładne kwoty",
+    "scanReceipt": "Zeskanuj paragon",
+    "dialogTitle": "Zeskanuj paragon",
+    "dialogDescription": "Zrób zdjęcie paragonu - pozycje i waluta są odczytywane automatycznie. Wskaż, kto dzielił się każdą z nich, a następnie zastosuj jako podział na dokładne kwoty.",
+    "takePhoto": "Zrób lub wybierz zdjęcie",
+    "photoHint": "Najlepiej czyta się płaskie, dobrze oświetlone zdjęcie.",
+    "scanningHint": "Zwykle kilka sekund. Chwila cierpliwości.",
+    "currency": "Waluta",
+    "detectedFromReceipt": "Wykryto z paragonu",
+    "itemPlaceholder": "Pozycja",
+    "removeItem": "Usuń pozycję",
+    "addItem": "Dodaj pozycję",
+    "tax": "Podatek",
+    "tip": "Napiwek",
+    "total": "Suma",
+    "rescan": "Zeskanuj ponownie",
+    "applyExactSplit": "Zastosuj podział na dokładne kwoty"
+  },
+  "currencyPicker": {
+    "selectCurrency": "Wybierz walutę",
+    "searchPlaceholder": "Szukaj waluty…",
+    "noneFound": "Nie znaleziono waluty."
+  }
+}

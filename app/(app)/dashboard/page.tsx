@@ -1,13 +1,14 @@
 import Link from "next/link";
 import { requireUser } from "@/lib/session";
+import { getDictionary } from "@/lib/i18n/dictionary";
 import { getUserGroups, getGroupBalances } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { BalanceAmount } from "@/components/balance-amount";
-import { formatMoney } from "@/lib/currency";
 import { Plus, Users, ArrowRight } from "lucide-react";
 
 export default async function DashboardPage() {
+  const dict = await getDictionary();
   const user = await requireUser();
   const groups = await getUserGroups(user.id);
 
@@ -28,11 +29,13 @@ export default async function DashboardPage() {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between gap-3">
-        <h1 className="text-2xl font-bold tracking-tight">Your groups</h1>
+        <h1 className="text-2xl font-bold tracking-tight">
+          {dict.pages.dashboard.title}
+        </h1>
         <Button asChild size="sm">
           <Link href="/groups/new">
             <Plus className="size-4" />
-            New group
+            {dict.pages.dashboard.newGroup}
           </Link>
         </Button>
       </div>
@@ -40,7 +43,9 @@ export default async function DashboardPage() {
       {/* Overall summary */}
       {totalsList.length > 0 && (
         <Card className="gap-3 p-5">
-          <p className="text-sm text-muted-foreground">Overall balance</p>
+          <p className="text-sm text-muted-foreground">
+            {dict.pages.dashboard.overallBalance}
+          </p>
           <div className="flex flex-wrap gap-x-6 gap-y-1">
             {totalsList.map(([currency, amount]) => (
               <div key={currency} className="flex flex-col">
@@ -51,7 +56,10 @@ export default async function DashboardPage() {
                   showSign
                 />
                 <span className="text-xs text-muted-foreground">
-                  {amount > 0 ? "you are owed" : "you owe"} · {currency}
+                  {amount > 0
+                    ? dict.pages.dashboard.youAreOwed
+                    : dict.pages.dashboard.youOwe}{" "}
+                  · {currency}
                 </span>
               </div>
             ))}
@@ -66,16 +74,15 @@ export default async function DashboardPage() {
             <Users className="size-6" />
           </div>
           <div>
-            <p className="font-semibold">No groups yet</p>
+            <p className="font-semibold">{dict.pages.dashboard.emptyTitle}</p>
             <p className="text-sm text-muted-foreground">
-              Create a group for your next trip or shared house to start
-              splitting expenses.
+              {dict.pages.dashboard.emptyBody}
             </p>
           </div>
           <Button asChild>
             <Link href="/groups/new">
               <Plus className="size-4" />
-              Create a group
+              {dict.pages.dashboard.createGroup}
             </Link>
           </Button>
         </Card>
@@ -96,7 +103,7 @@ export default async function DashboardPage() {
                     <div className="text-right">
                       {g.userNet === 0 ? (
                         <span className="text-sm text-muted-foreground">
-                          settled up
+                          {dict.pages.dashboard.settledUp}
                         </span>
                       ) : (
                         <>
@@ -105,7 +112,9 @@ export default async function DashboardPage() {
                             currency={g.baseCurrency}
                           />
                           <p className="text-xs text-muted-foreground">
-                            {g.userNet > 0 ? "you are owed" : "you owe"}
+                            {g.userNet > 0
+                              ? dict.pages.dashboard.youAreOwed
+                              : dict.pages.dashboard.youOwe}
                           </p>
                         </>
                       )}

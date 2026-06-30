@@ -8,32 +8,37 @@ import { getSession } from "@/lib/session";
 import { getGroup, getGroupMembers, getMembership } from "@/lib/queries";
 import { settlementSchema } from "@/lib/validators";
 import { toMinorUnits, convertMinorUnits } from "@/lib/currency";
-import { ok, fail, type ActionResult } from "@/lib/action-result";
+import {
+  ok,
+  fail,
+  type ActionResult,
+  type ActionErrorCode,
+} from "@/lib/action-result";
 
 export async function recordSettlement(input: unknown): Promise<ActionResult> {
   const session = await getSession();
-  if (!session?.user) return fail("You must be signed in.");
+  if (!session?.user) return fail("notSignedIn");
 
   const parsed = settlementSchema.safeParse(input);
   if (!parsed.success) {
-    return fail(parsed.error.issues[0]?.message ?? "Invalid input.");
+    return fail((parsed.error.issues[0]?.message as ActionErrorCode) ?? "invalidInput");
   }
   const data = parsed.data;
 
   if (data.fromUserId === data.toUserId) {
-    return fail("Payer and recipient must be different people.");
+    return fail("settlementSamePerson");
   }
 
   const membership = await getMembership(data.groupId, session.user.id);
-  if (!membership) return fail("You are not a member of this group.");
+  if (!membership) return fail("notAMember");
 
   const group = await getGroup(data.groupId);
-  if (!group) return fail("Group not found.");
+  if (!group) return fail("groupNotFound");
 
   const members = await getGroupMembers(data.groupId);
   const memberIds = new Set(members.map((m) => m.id));
   if (!memberIds.has(data.fromUserId) || !memberIds.has(data.toUserId)) {
-    return fail("Both people must be group members.");
+    return fail("settlementNotMembers");
   }
 
   const amountMinor = toMinorUnits(data.amount, data.currency);
@@ -66,10 +71,10 @@ export async function deleteSettlement(
   groupId: string,
 ): Promise<ActionResult> {
   const session = await getSession();
-  if (!session?.user) return fail("You must be signed in.");
+  if (!session?.user) return fail("notSignedIn");
 
   const membership = await getMembership(groupId, session.user.id);
-  if (!membership) return fail("You are not a member of this group.");
+  if (!membership) return fail("notAMember");
 
   await db.delete(settlements).where(eq(settlements.id, settlementId));
 

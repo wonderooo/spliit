@@ -29,7 +29,7 @@ export type ComputedSplit = {
 export function distribute(total: number, weights: number[]): number[] {
   const totalWeight = weights.reduce((a, w) => a + w, 0);
   if (totalWeight <= 0) {
-    throw new Error("Split weights must sum to a positive number.");
+    throw new Error("splitWeightsPositive");
   }
 
   const exact = weights.map((w) => (total * w) / totalWeight);
@@ -61,10 +61,10 @@ export function computeSplits(
   participants: SplitInput[],
 ): ComputedSplit[] {
   if (participants.length === 0) {
-    throw new Error("An expense needs at least one participant.");
+    throw new Error("splitNeedsParticipant");
   }
   if (total < 0) {
-    throw new Error("Amount cannot be negative.");
+    throw new Error("amountNegative");
   }
 
   switch (splitType) {
@@ -84,9 +84,7 @@ export function computeSplits(
       const amounts = participants.map((p) => Math.round(p.value ?? 0));
       const sum = amounts.reduce((a, x) => a + x, 0);
       if (sum !== total) {
-        throw new Error(
-          `Exact amounts must sum to the total (got ${sum}, expected ${total}).`,
-        );
+        throw new Error("exactSumMismatch");
       }
       return participants.map((p, i) => ({
         userId: p.userId,
@@ -99,9 +97,7 @@ export function computeSplits(
       const percentages = participants.map((p) => p.value ?? 0);
       const sum = percentages.reduce((a, x) => a + x, 0);
       if (Math.abs(sum - 100) > 1e-6) {
-        throw new Error(
-          `Percentages must sum to 100 (got ${sum}).`,
-        );
+        throw new Error("percentagesSum100");
       }
       const amounts = distribute(total, percentages);
       return participants.map((p, i) => ({
@@ -114,7 +110,7 @@ export function computeSplits(
     case "shares": {
       const weights = participants.map((p) => p.value ?? 0);
       if (weights.some((w) => w < 0)) {
-        throw new Error("Shares cannot be negative.");
+        throw new Error("sharesNegative");
       }
       const amounts = distribute(total, weights);
       return participants.map((p, i) => ({
@@ -126,7 +122,7 @@ export function computeSplits(
 
     default: {
       const _exhaustive: never = splitType;
-      throw new Error(`Unknown split type: ${_exhaustive}`);
+      throw new Error("unknownSplitType");
     }
   }
 }

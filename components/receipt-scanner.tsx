@@ -26,6 +26,8 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CurrencyPicker } from "@/components/currency-picker";
+import { useT } from "@/components/i18n-provider";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
 
 export type ScanResult = {
@@ -51,12 +53,14 @@ type Row = {
   assignees: Set<string>;
 };
 
-const SCAN_STAGES = [
-  "Reading the receipt…",
-  "Finding items & prices…",
-  "Detecting the currency…",
-  "Adding it all up…",
-];
+function scanStages(t: Dictionary) {
+  return [
+    t.receipt.stageReading,
+    t.receipt.stageFinding,
+    t.receipt.stageDetecting,
+    t.receipt.stageAdding,
+  ];
+}
 
 let rowSeq = 0;
 const nextId = () => `row-${rowSeq++}`;
@@ -86,6 +90,8 @@ export function ReceiptScanner({
   currentUserId: string;
   onApply: (result: ScanResult) => void;
 }) {
+  const t = useT();
+  const SCAN_STAGES = scanStages(t);
   const [open, setOpen] = useState(false);
   const [status, setStatus] = useState<"idle" | "scanning" | "review">("idle");
   const [stage, setStage] = useState(0);
@@ -140,7 +146,7 @@ export function ReceiptScanner({
       });
       if (!res.ok) {
         const { error } = await res.json().catch(() => ({ error: "" }));
-        throw new Error(error || "Scan failed");
+        throw new Error(error || t.receipt.scanFailed);
       }
       const data = (await res.json()) as ScannedReceipt;
 
@@ -164,12 +170,10 @@ export function ReceiptScanner({
       setTip(data.tip ? data.tip.toFixed(decimals) : "");
       setStatus("review");
       if (data.items.length === 0) {
-        toast.info("No items detected — add them manually below.");
+        toast.info(t.receipt.noItemsDetected);
       }
     } catch (err) {
-      toast.error(
-        err instanceof Error ? err.message : "Couldn't scan that image.",
-      );
+      toast.error(err instanceof Error ? err.message : t.receipt.scanFailed);
       setStatus("idle");
     }
   }
@@ -259,7 +263,7 @@ export function ReceiptScanner({
       }));
 
     if (splits.length === 0) {
-      toast.error("Assign at least one item to someone.");
+      toast.error(t.errors.assignItemToSomeone);
       return;
     }
 
@@ -269,7 +273,7 @@ export function ReceiptScanner({
       currency: scanCurrency,
       splits,
     });
-    toast.success("Receipt applied as an exact split");
+    toast.success(t.receipt.appliedAsExactSplit);
     onOpenChange(false);
   }
 
@@ -289,16 +293,13 @@ export function ReceiptScanner({
       <DialogTrigger asChild>
         <Button type="button" variant="outline" size="sm">
           <ScanLine className="size-4" />
-          Scan receipt
+          {t.receipt.scanReceipt}
         </Button>
       </DialogTrigger>
       <DialogContent className="max-h-[92svh] gap-4 overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Scan a receipt</DialogTitle>
-          <DialogDescription>
-            Snap the receipt — items and currency are read automatically. Tap
-            who shared each one, then apply as an exact split.
-          </DialogDescription>
+          <DialogTitle>{t.receipt.dialogTitle}</DialogTitle>
+          <DialogDescription>{t.receipt.dialogDescription}</DialogDescription>
         </DialogHeader>
 
         <input
@@ -317,9 +318,9 @@ export function ReceiptScanner({
             className="flex flex-col items-center gap-2 rounded-xl border border-dashed p-8 text-center transition-colors hover:border-foreground/30"
           >
             <Camera className="size-7 text-muted-foreground" />
-            <span className="text-sm font-medium">Take or choose a photo</span>
+            <span className="text-sm font-medium">{t.receipt.takePhoto}</span>
             <span className="text-xs text-muted-foreground">
-              A flat, well-lit photo reads best.
+              {t.receipt.photoHint}
             </span>
           </button>
         )}
@@ -358,7 +359,7 @@ export function ReceiptScanner({
             </div>
 
             <p className="text-center text-xs text-muted-foreground">
-              Usually a few seconds. Hang tight.
+              {t.receipt.scanningHint}
             </p>
           </div>
         )}
@@ -369,11 +370,11 @@ export function ReceiptScanner({
             <div className="flex items-center justify-between gap-3">
               <div className="flex flex-col">
                 <Label className="text-xs text-muted-foreground">
-                  Currency
+                  {t.receipt.currency}
                 </Label>
                 {detected && (
                   <span className="text-[11px] text-muted-foreground">
-                    Detected from the receipt
+                    {t.receipt.detectedFromReceipt}
                   </span>
                 )}
               </div>
@@ -397,7 +398,7 @@ export function ReceiptScanner({
                       onChange={(e) =>
                         updateRow(r.id, { name: e.target.value })
                       }
-                      placeholder="Item"
+                      placeholder={t.receipt.itemPlaceholder}
                       className="h-8 flex-1"
                     />
                     <Input
@@ -413,7 +414,7 @@ export function ReceiptScanner({
                       type="button"
                       onClick={() => removeRow(r.id)}
                       className="rounded-md p-1 text-muted-foreground hover:text-rose-500"
-                      aria-label="Remove item"
+                      aria-label={t.receipt.removeItem}
                     >
                       <Trash2 className="size-4" />
                     </button>
@@ -450,14 +451,14 @@ export function ReceiptScanner({
                 className="self-start"
               >
                 <Plus className="size-4" />
-                Add item
+                {t.receipt.addItem}
               </Button>
             </div>
 
             <div className="grid grid-cols-2 gap-3">
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="r-tax" className="text-xs">
-                  Tax
+                  {t.receipt.tax}
                 </Label>
                 <Input
                   id="r-tax"
@@ -470,7 +471,7 @@ export function ReceiptScanner({
               </div>
               <div className="flex flex-col gap-1.5">
                 <Label htmlFor="r-tip" className="text-xs">
-                  Tip
+                  {t.receipt.tip}
                 </Label>
                 <Input
                   id="r-tip"
@@ -486,7 +487,7 @@ export function ReceiptScanner({
             {/* Per-person preview */}
             <div className="rounded-lg bg-muted/40 p-3">
               <div className="mb-1 flex items-center justify-between text-sm font-medium">
-                <span>Total</span>
+                <span>{t.receipt.total}</span>
                 <span className="tabular-nums">
                   {formatMoney(totalMinor, scanCurrency)}
                 </span>
@@ -515,10 +516,10 @@ export function ReceiptScanner({
                 onClick={() => fileRef.current?.click()}
               >
                 <X className="size-4" />
-                Rescan
+                {t.receipt.rescan}
               </Button>
               <Button type="button" onClick={apply} disabled={totalMinor <= 0}>
-                Apply exact split
+                {t.receipt.applyExactSplit}
               </Button>
             </DialogFooter>
           </div>

@@ -34,14 +34,20 @@ import {
 } from "@/components/ui/sheet";
 import { CurrencyPicker } from "@/components/currency-picker";
 import { ReceiptScanner, type ScanResult } from "@/components/receipt-scanner";
+import { useT } from "@/components/i18n-provider";
+import { errorText } from "@/lib/action-result";
+import { format } from "@/lib/i18n/config";
+import type { Dictionary } from "@/lib/i18n/dictionary";
 import { cn } from "@/lib/utils";
 
-const SPLIT_LABELS: Record<SplitType, string> = {
-  equal: "Equally",
-  exact: "Exact",
-  percentage: "Percent",
-  shares: "Shares",
-};
+function splitLabels(t: Dictionary): Record<SplitType, string> {
+  return {
+    equal: t.expenseForm.splitEqually,
+    exact: t.expenseForm.splitExact,
+    percentage: t.expenseForm.splitPercent,
+    shares: t.expenseForm.splitShares,
+  };
+}
 
 function todayISO() {
   const d = new Date();
@@ -72,6 +78,8 @@ export function ExpenseForm({
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }) {
+  const t = useT();
+  const SPLIT_LABELS = splitLabels(t);
   const isEdit = expense != null;
   const isControlled = controlledOpen !== undefined;
 
@@ -131,8 +139,8 @@ export function ExpenseForm({
 
   // Live validation of the split.
   const splitState = useMemo(
-    () => validateSplit(splitType, participants, values, totalMinor, currency),
-    [splitType, participants, values, totalMinor, currency],
+    () => validateSplit(t, splitType, participants, values, totalMinor, currency),
+    [t, splitType, participants, values, totalMinor, currency],
   );
 
   const baseAmount = isForeign
@@ -196,7 +204,11 @@ export function ExpenseForm({
       if (!isEdit) reset();
     } else {
       toast.error(
-        res.error ?? (isEdit ? "Could not save changes." : "Could not add expense."),
+        res.error
+          ? errorText(t, res.error)
+          : isEdit
+            ? t.expenseForm.couldNotSaveChanges
+            : t.expenseForm.couldNotAddExpense,
       );
       setOpen(true); // reopen so the user can fix and retry (values preserved)
     }
@@ -210,7 +222,8 @@ export function ExpenseForm({
     setValues(
       Object.fromEntries(result.splits.map((s) => [s.userId, String(s.valueMajor)])),
     );
-    if (!description.trim()) setDescription(result.merchant?.trim() || "Receipt");
+    if (!description.trim())
+      setDescription(result.merchant?.trim() || t.expenseForm.defaultDescription);
   }
 
   return (
@@ -219,7 +232,7 @@ export function ExpenseForm({
         <SheetTrigger asChild>
           <Button className="w-full sm:w-auto">
             <Plus className="size-4" />
-            Add expense
+            {t.expenseForm.addExpense}
           </Button>
         </SheetTrigger>
       )}
@@ -228,10 +241,10 @@ export function ExpenseForm({
         className="max-h-[92svh] overflow-y-auto rounded-t-2xl sm:max-w-lg"
       >
         <SheetHeader>
-          <SheetTitle>{isEdit ? "Edit expense" : "Add expense"}</SheetTitle>
-          <SheetDescription>
-            Record what was paid and how to split it.
-          </SheetDescription>
+          <SheetTitle>
+            {isEdit ? t.expenseForm.editExpense : t.expenseForm.addExpense}
+          </SheetTitle>
+          <SheetDescription>{t.expenseForm.description}</SheetDescription>
         </SheetHeader>
 
         <form
@@ -248,12 +261,12 @@ export function ExpenseForm({
           </div>
 
           <div className="flex flex-col gap-2">
-            <Label htmlFor="desc">Description</Label>
+            <Label htmlFor="desc">{t.expenseForm.descriptionLabel}</Label>
             <Input
               id="desc"
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Dinner, taxi, groceries…"
+              placeholder={t.expenseForm.descriptionPlaceholder}
               required
               autoFocus
             />
@@ -261,7 +274,7 @@ export function ExpenseForm({
 
           <div className="grid grid-cols-3 gap-3">
             <div className="col-span-2 flex flex-col gap-2">
-              <Label htmlFor="amount">Amount</Label>
+              <Label htmlFor="amount">{t.expenseForm.amount}</Label>
               <Input
                 id="amount"
                 type="number"
@@ -275,7 +288,7 @@ export function ExpenseForm({
               />
             </div>
             <div className="flex flex-col gap-2">
-              <Label>Currency</Label>
+              <Label>{t.expenseForm.currency}</Label>
               <CurrencyPicker value={currency} onChange={setCurrency} />
             </div>
           </div>
@@ -285,7 +298,10 @@ export function ExpenseForm({
               <div className="flex items-end gap-3">
                 <div className="flex flex-1 flex-col gap-1.5">
                   <Label htmlFor="fx" className="text-xs">
-                    Rate (1 {currency} → {baseCurrency})
+                    {format(t.expenseForm.rateLabel, {
+                      currency,
+                      baseCurrency,
+                    })}
                   </Label>
                   <Input
                     id="fx"
@@ -305,14 +321,14 @@ export function ExpenseForm({
                 </p>
               </div>
               <p className="mt-1 text-xs text-muted-foreground">
-                Auto-filled from daily rates — edit if you used a different one.
+                {t.expenseForm.rateHelp}
               </p>
             </div>
           )}
 
           <div className="grid grid-cols-2 gap-3">
             <div className="flex flex-col gap-2">
-              <Label>Paid by</Label>
+              <Label>{t.expenseForm.paidBy}</Label>
               <Select value={paidBy} onValueChange={setPaidBy}>
                 <SelectTrigger>
                   <SelectValue />
@@ -320,14 +336,14 @@ export function ExpenseForm({
                 <SelectContent>
                   {members.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
-                      {m.id === currentUserId ? "You" : m.name}
+                      {m.id === currentUserId ? t.common.you : m.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
             <div className="flex flex-col gap-2">
-              <Label htmlFor="date">Date</Label>
+              <Label htmlFor="date">{t.expenseForm.date}</Label>
               <Input
                 id="date"
                 type="date"
@@ -340,7 +356,7 @@ export function ExpenseForm({
 
           {/* Split type selector */}
           <div className="flex flex-col gap-2">
-            <Label>Split</Label>
+            <Label>{t.expenseForm.split}</Label>
             <div className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-1">
               {(Object.keys(SPLIT_LABELS) as SplitType[]).map((t) => (
                 <button
@@ -378,15 +394,17 @@ export function ExpenseForm({
                     checked={isSel}
                     onChange={() => toggleMember(m.id)}
                     className="size-4 accent-primary"
-                    aria-label={`Include ${m.name}`}
+                    aria-label={format(t.expenseForm.includeMember, {
+                      name: m.name,
+                    })}
                   />
                   <span className="flex-1 truncate text-sm">
-                    {m.id === currentUserId ? "You" : m.name}
+                    {m.id === currentUserId ? t.common.you : m.name}
                   </span>
 
                   {isSel && splitType === "equal" && (
                     <span className="text-sm text-muted-foreground tabular-nums">
-                      {share != null ? formatMoney(share, currency) : "—"}
+                      {share != null ? formatMoney(share, currency) : "-"}
                     </span>
                   )}
 
@@ -406,8 +424,8 @@ export function ExpenseForm({
                           splitType === "percentage"
                             ? "%"
                             : splitType === "shares"
-                              ? "shares"
-                              : "amount"
+                              ? t.expenseForm.sharesPlaceholder
+                              : t.expenseForm.amountPlaceholderWord
                         }
                       />
                       {splitType === "percentage" && (
@@ -438,10 +456,10 @@ export function ExpenseForm({
               disabled={saving || !description.trim() || amountNum <= 0}
             >
               {saving
-                ? "Saving…"
+                ? t.expenseForm.saving
                 : isEdit
-                  ? "Save changes"
-                  : "Add expense"}
+                  ? t.expenseForm.saveChanges
+                  : t.expenseForm.addExpense}
             </Button>
           </SheetFooter>
         </form>
@@ -482,6 +500,7 @@ type SplitState = {
 };
 
 function validateSplit(
+  t: Dictionary,
   splitType: SplitType,
   participants: MemberUser[],
   values: Record<string, string>,
@@ -489,10 +508,10 @@ function validateSplit(
   currency: string,
 ): SplitState {
   if (participants.length === 0) {
-    return { valid: false, message: "Pick at least one person.", shares: {} };
+    return { valid: false, message: t.expenseForm.pickAtLeastOnePerson, shares: {} };
   }
   if (totalMinor <= 0) {
-    return { valid: false, message: "Enter an amount.", shares: {} };
+    return { valid: false, message: t.expenseForm.enterAnAmount, shares: {} };
   }
 
   if (splitType === "equal") {
@@ -503,7 +522,9 @@ function validateSplit(
     });
     return {
       valid: true,
-      message: `Split equally — ${formatMoney(per, currency)} each.`,
+      message: format(t.expenseForm.splitEquallyEach, {
+        amount: formatMoney(per, currency),
+      }),
       shares,
     };
   }
@@ -521,11 +542,11 @@ function validateSplit(
       valid: diff === 0,
       message:
         diff === 0
-          ? "Amounts add up."
-          : `${diff > 0 ? "Missing" : "Over by"} ${formatMoney(
-              Math.abs(diff),
-              currency,
-            )}.`,
+          ? t.expenseForm.amountsAddUp
+          : format(
+              diff > 0 ? t.expenseForm.missingAmount : t.expenseForm.overByAmount,
+              { amount: formatMoney(Math.abs(diff), currency) },
+            ),
       shares,
     };
   }
@@ -537,8 +558,8 @@ function validateSplit(
       valid: Math.abs(sum - 100) < 1e-6,
       message:
         Math.abs(sum - 100) < 1e-6
-          ? "Percentages add up to 100%."
-          : `Percentages add up to ${sum}% (need 100%).`,
+          ? t.expenseForm.percentagesAddUp
+          : format(t.expenseForm.percentagesAddUpTo, { sum }),
       shares: {},
     };
   }
@@ -550,8 +571,8 @@ function validateSplit(
     valid: sum > 0,
     message:
       sum > 0
-        ? "Split by shares."
-        : "Enter a share for at least one person.",
+        ? t.expenseForm.splitByShares
+        : t.expenseForm.enterShareForOne,
     shares: {},
   };
 }

@@ -1,0 +1,339 @@
+{
+  "meta": {
+    "title": "Spliit - split expenses with friends",
+    "description": "Split trip and group expenses in any currency, see who owes what, and settle up in a tap."
+  },
+  "common": {
+    "save": "Save",
+    "cancel": "Cancel",
+    "done": "Done",
+    "back": "Back",
+    "you": "You",
+    "loading": "Loading…",
+    "language": "Language",
+    "toggleTheme": "Toggle theme",
+    "signOut": "Sign out"
+  },
+  "nav": {
+    "expenses": "Expenses",
+    "balances": "Balances",
+    "settle": "Settle up",
+    "members": "Members"
+  },
+  "auth": {
+    "continueWithGoogle": "Continue with Google",
+    "redirecting": "Redirecting…",
+    "signInWithGoogle": "Sign in with Google to accept the invite."
+  },
+  "home": {
+    "badge": "Now with AI receipt scanning",
+    "tagline": "Track group spending, split it fairly, settle up in seconds.",
+    "ctaNote": "Free to use. Sign in with Google to get started.",
+    "receipt": {
+      "label": "Receipt scanning",
+      "title": "Snap the receipt. Skip the typing.",
+      "body": "Point your camera at any receipt and Spliit reads it for you - every line item, the prices, tax and tip, even the currency. Tap who shared each dish and it splits to the exact cent.",
+      "points": [
+        "Reads items, prices, tax, tip and total automatically",
+        "Detects the currency from the receipt",
+        "Assign each item to the people who shared it",
+        "Applies as an exact split - no mental math"
+      ],
+      "scanned": "Scanned",
+      "total": "Total",
+      "splitWays": "Split 2 ways",
+      "each": "€45.00 each"
+    },
+    "features": {
+      "title": "Everything you need to split fairly",
+      "subtitle": "From a two-person dinner to a two-week trip with the whole crew.",
+      "items": [
+        {
+          "title": "Split any way",
+          "body": "Equally, by exact amounts, percentage, or shares. The math always balances to the cent - and it tells you the moment it doesn't."
+        },
+        {
+          "title": "Any currency",
+          "body": "Log an expense in euros, yen, or rupiah. Daily exchange rates are fetched automatically and you can override them anytime."
+        },
+        {
+          "title": "Smart settle-up",
+          "body": "See who owes whom at a glance, plus the fewest payments needed to clear every debt. Record a payment and balances zero out."
+        },
+        {
+          "title": "Shared groups",
+          "body": "Spin up a group for a trip, flat, or dinner crew. Share one link - everyone joins and sees the same running tab."
+        }
+      ]
+    },
+    "steps": {
+      "title": "Up and running in three steps",
+      "items": [
+        {
+          "title": "Create a group",
+          "body": "Name it, pick a base currency, invite your crew with a link."
+        },
+        {
+          "title": "Add or scan expenses",
+          "body": "Type an expense, or snap the receipt and let Spliit do the typing."
+        },
+        {
+          "title": "Settle up",
+          "body": "See who owes what and clear it in the fewest payments possible."
+        }
+      ]
+    },
+    "install": {
+      "label": "Install on iPhone",
+      "title": "Add Spliit to your home screen",
+      "body": "No App Store needed. Install it from Safari and it opens full-screen with its own icon - just like a native app.",
+      "items": [
+        {
+          "title": "Tap Share",
+          "body": "Open spliit in Safari, then tap the Share button in the toolbar (the square with an arrow)."
+        },
+        {
+          "title": "Add to Home Screen",
+          "body": "Scroll the share sheet and choose “Add to Home Screen.”"
+        },
+        {
+          "title": "Tap Add",
+          "body": "Confirm with “Add.” Spliit lands on your home screen with its own icon."
+        }
+      ],
+      "android": "On Android, open the browser menu and choose “Install app” or “Add to Home screen.”"
+    },
+    "finalCta": {
+      "title": "Ready to split fairly?",
+      "body": "Free to use. Create your first group in under a minute.",
+      "note": "Sign in with Google - no card, no spam."
+    },
+    "footer": {
+      "tagline": "Splits your bills, not your friendships.",
+      "copyright": "© 2026 Spliit. All rights reserved."
+    }
+  },
+  "errors": {
+    "unknown": "Something went wrong. Please try again.",
+    "notSignedIn": "You must be signed in.",
+    "invalidInput": "Please check the form and try again.",
+    "notAMember": "You are not a member of this group.",
+    "groupNotFound": "Group not found.",
+    "expenseNotFound": "Expense not found.",
+    "payerNotMember": "The payer must be a group member.",
+    "participantsNotMembers": "Everyone in the split must be a group member.",
+    "settlementSamePerson": "Payer and recipient must be different people.",
+    "settlementNotMembers": "Both people must be group members.",
+    "inviteInvalid": "This invite link is invalid.",
+    "inviteRevoked": "This invite has been revoked.",
+    "inviteUsed": "This invite has already been used.",
+    "inviteExpired": "This invite link has expired.",
+    "inviteWrongEmail": "This invite was sent to a different email address.",
+    "nameRequired": "Name is required.",
+    "descriptionRequired": "Description is required.",
+    "amountPositive": "Amount must be greater than zero.",
+    "invalidDate": "Invalid date.",
+    "pickOnePerson": "Pick at least one person.",
+    "splitWeightsPositive": "Split weights must add up to a positive number.",
+    "splitNeedsParticipant": "An expense needs at least one participant.",
+    "amountNegative": "Amount cannot be negative.",
+    "exactSumMismatch": "Exact amounts must add up to the total.",
+    "percentagesSum100": "Percentages must add up to 100%.",
+    "sharesNegative": "Shares cannot be negative.",
+    "unknownSplitType": "Unknown split type.",
+    "couldNotStartSignIn": "Could not start sign-in. Please try again.",
+    "assignItemToSomeone": "Assign at least one item to someone.",
+    "pickRecipient": "Pick who received the payment."
+  },
+  "pages": {
+    "dashboard": {
+      "title": "Your groups",
+      "newGroup": "New group",
+      "overallBalance": "Overall balance",
+      "youAreOwed": "you are owed",
+      "youOwe": "you owe",
+      "settledUp": "settled up",
+      "emptyTitle": "No groups yet",
+      "emptyBody": "Create a group for your next trip or shared house to start splitting expenses.",
+      "createGroup": "Create a group"
+    },
+    "newGroup": {
+      "title": "New group"
+    },
+    "group": {
+      "allGroups": "All groups"
+    },
+    "balances": {
+      "someone": "Someone",
+      "balancesHeading": "Balances",
+      "settled": "settled",
+      "getsBack": "gets back",
+      "owes": "owes",
+      "suggestedPayments": "Suggested payments",
+      "allSettledTitle": "Everyone is settled up",
+      "allSettledBody": "No payments needed right now."
+    },
+    "invite": {
+      "reasonInvalid": "This invite link is invalid.",
+      "reasonExpired": "This invite link has expired.",
+      "reasonRevoked": "This invite has been revoked.",
+      "unavailableTitle": "Invite unavailable",
+      "memberCountOne": "{count} member",
+      "memberCountMany": "{count} members",
+      "invitedYou": "{name} invited you to split expenses together."
+    }
+  },
+  "expenseForm": {
+    "splitEqually": "Equally",
+    "splitExact": "Exact",
+    "splitPercent": "Percent",
+    "splitShares": "Shares",
+    "addExpense": "Add expense",
+    "editExpense": "Edit expense",
+    "description": "Record what was paid and how to split it.",
+    "descriptionLabel": "Description",
+    "descriptionPlaceholder": "Dinner, taxi, groceries…",
+    "defaultDescription": "Receipt",
+    "amount": "Amount",
+    "currency": "Currency",
+    "rateLabel": "Rate (1 {currency} → {baseCurrency})",
+    "rateHelp": "Auto-filled from daily rates - edit if you used a different one.",
+    "paidBy": "Paid by",
+    "date": "Date",
+    "split": "Split",
+    "includeMember": "Include {name}",
+    "sharesPlaceholder": "shares",
+    "amountPlaceholderWord": "amount",
+    "saving": "Saving…",
+    "saveChanges": "Save changes",
+    "couldNotSaveChanges": "Could not save changes.",
+    "couldNotAddExpense": "Could not add expense.",
+    "pickAtLeastOnePerson": "Pick at least one person.",
+    "enterAnAmount": "Enter an amount.",
+    "splitEquallyEach": "Split equally - {amount} each.",
+    "amountsAddUp": "Amounts add up.",
+    "missingAmount": "Missing {amount}.",
+    "overByAmount": "Over by {amount}.",
+    "percentagesAddUp": "Percentages add up to 100%.",
+    "percentagesAddUpTo": "Percentages add up to {sum}% (need 100%).",
+    "splitByShares": "Split by shares.",
+    "enterShareForOne": "Enter a share for at least one person."
+  },
+  "expensesView": {
+    "added": "Expense added",
+    "updated": "Expense updated",
+    "deleted": "Expense deleted"
+  },
+  "expenseList": {
+    "splitEqually": "equally",
+    "splitExact": "exact",
+    "splitShares": "shares",
+    "someone": "Someone",
+    "emptyTitle": "No expenses yet",
+    "emptyBody": "Add your first expense to start tracking who owes what.",
+    "paidBy": "{name} paid",
+    "actions": "Expense actions",
+    "edit": "Edit",
+    "delete": "Delete",
+    "deleteTitle": "Delete this expense?",
+    "deleteBody": "“{description}” ({amount}) will be removed for everyone. This can't be undone."
+  },
+  "createGroup": {
+    "created": "Group created",
+    "nameLabel": "Group name",
+    "namePlaceholder": "Bali trip 2026",
+    "descriptionLabel": "Description (optional)",
+    "descriptionPlaceholder": "Two weeks, four friends, one budget.",
+    "currencyLabel": "Base currency",
+    "currencyHelp": "Balances are shown in this currency. Expenses can still be added in any currency.",
+    "creating": "Creating…",
+    "submit": "Create group"
+  },
+  "settleUp": {
+    "someone": "Someone",
+    "paymentRecorded": "Payment recorded",
+    "paymentRemoved": "Payment removed",
+    "suggestedPayments": "Suggested payments",
+    "recordPayment": "Record payment",
+    "allSettledUp": "All settled up",
+    "nothingToPay": "Nothing to pay back right now.",
+    "settle": "Settle",
+    "paymentHistory": "Payment history",
+    "deletePayment": "Delete payment",
+    "couldNotRecord": "Could not record payment.",
+    "dialogTitle": "Record a payment",
+    "dialogDescription": "Log money that changed hands to settle a debt.",
+    "from": "From",
+    "to": "To",
+    "selectPlaceholder": "Select",
+    "amount": "Amount",
+    "currency": "Currency",
+    "rateLabel": "Rate (1 {currency} → {baseCurrency})",
+    "date": "Date",
+    "noteLabel": "Note (optional)",
+    "notePlaceholder": "Venmo, cash, …",
+    "saving": "Saving…"
+  },
+  "membersPanel": {
+    "membersCount": "Members ({count})",
+    "pendingInvites": "Pending invites",
+    "nameUpdated": "Name updated",
+    "youSuffix": "(You)",
+    "owner": "Owner",
+    "editYourName": "Edit your name",
+    "inviteLinkCopied": "Invite link copied",
+    "inviteRevoked": "Invite revoked",
+    "anyoneWithLink": "Anyone with the link",
+    "link": "Link",
+    "revokeInvite": "Revoke invite",
+    "inviteLinkCreated": "Invite link created",
+    "invite": "Invite",
+    "inviteTitle": "Invite someone",
+    "inviteDescription": "Create a link to share. They sign in with Google to join - the link works for 7 days.",
+    "emailLabel": "Email (optional)",
+    "emailPlaceholder": "friend@example.com",
+    "emailHelp": "Leave blank and anyone with the link can join. Set an email to lock the link to that one person.",
+    "creating": "Creating…",
+    "createInviteLink": "Create invite link",
+    "copyInviteLink": "Copy invite link"
+  },
+  "acceptInvite": {
+    "alreadyMember": "You're already in this group",
+    "joined": "You've joined the group",
+    "nameLabel": "Your name in this group",
+    "namePlaceholder": "e.g. Alex",
+    "nameHelp": "This is how you'll show up to the group. You can change it later.",
+    "joining": "Joining…",
+    "joinGroup": "Join group"
+  },
+  "receipt": {
+    "stageReading": "Reading the receipt…",
+    "stageFinding": "Finding items & prices…",
+    "stageDetecting": "Detecting the currency…",
+    "stageAdding": "Adding it all up…",
+    "scanFailed": "Couldn't scan that image.",
+    "noItemsDetected": "No items detected - add them manually below.",
+    "appliedAsExactSplit": "Receipt applied as an exact split",
+    "scanReceipt": "Scan receipt",
+    "dialogTitle": "Scan a receipt",
+    "dialogDescription": "Snap the receipt - items and currency are read automatically. Tap who shared each one, then apply as an exact split.",
+    "takePhoto": "Take or choose a photo",
+    "photoHint": "A flat, well-lit photo reads best.",
+    "scanningHint": "Usually a few seconds. Hang tight.",
+    "currency": "Currency",
+    "detectedFromReceipt": "Detected from the receipt",
+    "itemPlaceholder": "Item",
+    "removeItem": "Remove item",
+    "addItem": "Add item",
+    "tax": "Tax",
+    "tip": "Tip",
+    "total": "Total",
+    "rescan": "Rescan",
+    "applyExactSplit": "Apply exact split"
+  },
+  "currencyPicker": {
+    "selectCurrency": "Select currency",
+    "searchPlaceholder": "Search currency…",
+    "noneFound": "No currency found."
+  }
+}

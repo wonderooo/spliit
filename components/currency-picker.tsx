@@ -18,6 +18,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { useT } from "@/components/i18n-provider";
 
 export function CurrencyPicker({
   value,
@@ -28,6 +29,7 @@ export function CurrencyPicker({
   onChange: (code: string) => void;
   id?: string;
 }) {
+  const t = useT();
   const [open, setOpen] = useState(false);
   const selected = CURRENCIES.find((c) => c.code === value);
 
@@ -42,7 +44,9 @@ export function CurrencyPicker({
           aria-expanded={open}
           className="w-full justify-between font-normal"
         >
-          {selected ? `${selected.code} · ${selected.symbol}` : "Select currency"}
+          {selected
+            ? `${selected.code} · ${selected.symbol}`
+            : t.currencyPicker.selectCurrency}
           <ChevronsUpDown className="size-4 opacity-50" />
         </Button>
       </PopoverTrigger>
@@ -51,9 +55,9 @@ export function CurrencyPicker({
         align="start"
       >
         <Command>
-          <CommandInput placeholder="Search currency…" />
+          <CommandInput placeholder={t.currencyPicker.searchPlaceholder} />
           <CommandList>
-            <CommandEmpty>No currency found.</CommandEmpty>
+            <CommandEmpty>{t.currencyPicker.noneFound}</CommandEmpty>
             <CommandGroup>
               {CURRENCIES.map((c) => (
                 <CommandItem

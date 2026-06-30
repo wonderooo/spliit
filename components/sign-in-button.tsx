@@ -4,6 +4,7 @@ import { useState } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Button } from "@/components/ui/button";
 import { toast } from "sonner";
+import { useT } from "@/components/i18n-provider";
 
 function GoogleIcon() {
   return (
@@ -32,13 +33,14 @@ export function SignInButton({
   callbackURL = "/dashboard",
   size = "lg",
   className,
-  label = "Continue with Google",
+  label,
 }: {
   callbackURL?: string;
   size?: "default" | "sm" | "lg";
   className?: string;
   label?: string;
 }) {
+  const t = useT();
   const [loading, setLoading] = useState(false);
 
   async function handleClick() {
@@ -46,7 +48,7 @@ export function SignInButton({
     try {
       await authClient.signIn.social({ provider: "google", callbackURL });
     } catch {
-      toast.error("Could not start sign-in. Please try again.");
+      toast.error(t.errors.couldNotStartSignIn);
       setLoading(false);
     }
   }
@@ -60,7 +62,7 @@ export function SignInButton({
       className={className}
     >
       <GoogleIcon />
-      {loading ? "Redirecting…" : label}
+      {loading ? t.auth.redirecting : (label ?? t.auth.continueWithGoogle)}
     </Button>
   );
 }

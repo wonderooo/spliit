@@ -7,6 +7,8 @@ import { acceptInvite } from "@/server/actions/invites";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useT } from "@/components/i18n-provider";
+import { errorText } from "@/lib/action-result";
 
 export function AcceptInvite({
   token,
@@ -15,6 +17,7 @@ export function AcceptInvite({
   token: string;
   defaultName: string;
 }) {
+  const t = useT();
   const router = useRouter();
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState(defaultName);
@@ -28,8 +31,8 @@ export function AcceptInvite({
       if (res.ok) {
         toast.success(
           res.data.alreadyMember
-            ? "You're already in this group"
-            : "You've joined the group",
+            ? t.acceptInvite.alreadyMember
+            : t.acceptInvite.joined,
         );
         router.push(`/groups/${res.data.groupId}`);
         router.refresh();
@@ -42,22 +45,24 @@ export function AcceptInvite({
   return (
     <form onSubmit={onAccept} className="flex w-full flex-col gap-3 text-left">
       <div className="flex flex-col gap-2">
-        <Label htmlFor="member-name">Your name in this group</Label>
+        <Label htmlFor="member-name">{t.acceptInvite.nameLabel}</Label>
         <Input
           id="member-name"
           value={name}
           onChange={(e) => setName(e.target.value)}
           maxLength={80}
-          placeholder="e.g. Alex"
+          placeholder={t.acceptInvite.namePlaceholder}
         />
         <p className="text-xs text-muted-foreground">
-          This is how you&apos;ll show up to the group. You can change it later.
+          {t.acceptInvite.nameHelp}
         </p>
       </div>
       <Button type="submit" disabled={pending || name.trim() === ""} size="lg">
-        {pending ? "Joining…" : "Join group"}
+        {pending ? t.acceptInvite.joining : t.acceptInvite.joinGroup}
       </Button>
-      {error && <p className="text-sm text-rose-500">{error}</p>}
+      {error && (
+        <p className="text-sm text-rose-500">{errorText(t, error)}</p>
+      )}
     </form>
   );
 }
