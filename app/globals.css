@@ -127,6 +127,27 @@
   html {
     @apply font-sans;
   }
+
+  /* iOS Safari sizes native date/time inputs to their content and ignores
+     width:100%/min-width:0, so they overflow their flex/grid track and force a
+     horizontal scrollbar. `appearance: none` releases that intrinsic width;
+     it keeps the desktop calendar-picker icon and the iOS wheel still opens on
+     tap, so it is safe to apply everywhere. (An @supports iOS guard would be
+     pruned by the Lightning CSS build, so the reset is global.) */
+  input[type="date"],
+  input[type="time"],
+  input[type="datetime-local"] {
+    -webkit-appearance: none;
+    appearance: none;
+    min-width: 0;
+    max-width: 100%;
+  }
+  input[type="date"]::-webkit-date-and-time-value,
+  input[type="time"]::-webkit-date-and-time-value,
+  input[type="datetime-local"]::-webkit-date-and-time-value {
+    text-align: left;
+    min-width: 0;
+  }
 }
 
 /* Indeterminate progress bar (used while a receipt scan is in flight). */
