@@ -57,7 +57,7 @@ export default async function InvitePage({
           </p>
         </div>
         {session?.user ? (
-          <AcceptInvite token={token} />
+          <AcceptInvite token={token} defaultName={session.user.name} />
         ) : (
           <div className="flex flex-col items-center gap-2">
             <SignInButton callbackURL={`/invite/${token}`} />

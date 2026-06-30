@@ -19,6 +19,19 @@ export const inviteSchema = z.object({
 });
 export type InviteInput = z.infer<typeof inviteSchema>;
 
+/** Per-group display name a member picks when joining or in the members tab. */
+export const memberNameSchema = z
+  .string()
+  .trim()
+  .min(1, "Name is required")
+  .max(80);
+
+export const updateMemberNameSchema = z.object({
+  groupId: z.uuid(),
+  name: memberNameSchema,
+});
+export type UpdateMemberNameInput = z.infer<typeof updateMemberNameSchema>;
+
 const splitEntrySchema = z.object({
   userId: z.string().min(1),
   // Meaning depends on split type; validated in computeSplits.

@@ -1,5 +1,5 @@
 import "server-only";
-import { and, countDistinct, desc, eq } from "drizzle-orm";
+import { and, countDistinct, desc, eq, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   groups,
@@ -66,7 +66,8 @@ export async function getGroupMembers(groupId: string): Promise<MemberUser[]> {
   const rows = await db
     .select({
       id: userTable.id,
-      name: userTable.name,
+      // Per-group display name when set, otherwise the user's account name.
+      name: sql<string>`coalesce(${groupMembers.name}, ${userTable.name})`,
       email: userTable.email,
       image: userTable.image,
       joinedAt: groupMembers.joinedAt,

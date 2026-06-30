@@ -107,6 +107,8 @@ export const groupMembers = pgTable(
     userId: text("user_id")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),
+    /** Per-group display name. Null falls back to the user's account name. */
+    name: text("name"),
     role: text("role").$type<MemberRole>().default("member").notNull(),
     joinedAt: timestamp("joined_at").defaultNow().notNull(),
   },

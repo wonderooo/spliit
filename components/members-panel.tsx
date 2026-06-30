@@ -3,8 +3,9 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Copy, Mail, UserPlus, X, Check } from "lucide-react";
+import { Copy, Mail, UserPlus, X, Check, Pencil } from "lucide-react";
 import { createInvite, revokeInvite } from "@/server/actions/invites";
+import { updateMemberName } from "@/server/actions/members";
 import type { MemberUser } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -58,23 +59,13 @@ export function MembersPanel({
         <Card className="gap-0 p-0">
           <ul className="divide-y">
             {members.map((m) => (
-              <li key={m.id} className="flex items-center gap-3 px-4 py-3">
-                <Avatar className="size-8">
-                  {m.image ? <AvatarImage src={m.image} alt={m.name} /> : null}
-                  <AvatarFallback className="text-xs">
-                    {initials(m.name)}
-                  </AvatarFallback>
-                </Avatar>
-                <div className="min-w-0 flex-1">
-                  <p className="truncate text-sm font-medium">
-                    {m.id === currentUserId ? "You" : m.name}
-                  </p>
-                  <p className="truncate text-xs text-muted-foreground">
-                    {m.email}
-                  </p>
-                </div>
-                {m.id === ownerId && <Badge variant="secondary">Owner</Badge>}
-              </li>
+              <MemberRow
+                key={m.id}
+                member={m}
+                groupId={groupId}
+                isCurrentUser={m.id === currentUserId}
+                isOwner={m.id === ownerId}
+              />
             ))}
           </ul>
         </Card>
@@ -99,6 +90,107 @@ export function MembersPanel({
         </section>
       )}
     </div>
+  );
+}
+
+function MemberRow({
+  member,
+  groupId,
+  isCurrentUser,
+  isOwner,
+}: {
+  member: MemberUser;
+  groupId: string;
+  isCurrentUser: boolean;
+  isOwner: boolean;
+}) {
+  const router = useRouter();
+  const [editing, setEditing] = useState(false);
+  const [name, setName] = useState(member.name);
+  const [pending, startTransition] = useTransition();
+
+  function onSave(e: React.FormEvent) {
+    e.preventDefault();
+    const next = name.trim();
+    if (next === "" || next === member.name) {
+      setEditing(false);
+      setName(member.name);
+      return;
+    }
+    startTransition(async () => {
+      const res = await updateMemberName({ groupId, name: next });
+      if (res.ok) {
+        toast.success("Name updated");
+        setEditing(false);
+        router.refresh();
+      } else {
+        toast.error(res.error);
+      }
+    });
+  }
+
+  return (
+    <li className="flex items-center gap-3 px-4 py-3">
+      <Avatar className="size-8">
+        {member.image ? (
+          <AvatarImage src={member.image} alt={member.name} />
+        ) : null}
+        <AvatarFallback className="text-xs">
+          {initials(member.name)}
+        </AvatarFallback>
+      </Avatar>
+      {editing ? (
+        <form onSubmit={onSave} className="flex flex-1 items-center gap-2">
+          <Input
+            autoFocus
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            maxLength={80}
+            disabled={pending}
+            className="h-8"
+          />
+          <Button type="submit" size="sm" disabled={pending}>
+            Save
+          </Button>
+          <Button
+            type="button"
+            size="sm"
+            variant="ghost"
+            disabled={pending}
+            onClick={() => {
+              setEditing(false);
+              setName(member.name);
+            }}
+          >
+            Cancel
+          </Button>
+        </form>
+      ) : (
+        <>
+          <div className="min-w-0 flex-1">
+            <p className="truncate text-sm font-medium">
+              {member.name}
+              {isCurrentUser && (
+                <span className="text-muted-foreground"> (You)</span>
+              )}
+            </p>
+            <p className="truncate text-xs text-muted-foreground">
+              {member.email}
+            </p>
+          </div>
+          {isOwner && <Badge variant="secondary">Owner</Badge>}
+          {isCurrentUser && (
+            <button
+              onClick={() => setEditing(true)}
+              className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+              aria-label="Edit your name"
+            >
+              <Pencil className="size-4" />
+            </button>
+          )}
+        </>
+      )}
+    </li>
   );
 }
 

@@ -6,7 +6,7 @@ import { db } from "@/lib/db";
 import { invitations, groupMembers } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getMembership } from "@/lib/queries";
-import { inviteSchema } from "@/lib/validators";
+import { inviteSchema, memberNameSchema } from "@/lib/validators";
 import { ok, fail, type ActionResult } from "@/lib/action-result";
 
 const INVITE_TTL_MS = 7 * 24 * 60 * 60 * 1000;
@@ -42,9 +42,20 @@ export async function createInvite(
 
 export async function acceptInvite(
   token: string,
+  name?: string,
 ): Promise<ActionResult<{ groupId: string; alreadyMember: boolean }>> {
   const session = await getSession();
   if (!session?.user) return fail("You must be signed in.");
+
+  // The display name is optional; fall back to the account name when absent.
+  let memberName: string | null = null;
+  if (name !== undefined && name.trim() !== "") {
+    const parsedName = memberNameSchema.safeParse(name);
+    if (!parsedName.success) {
+      return fail(parsedName.error.issues[0]?.message ?? "Invalid name.");
+    }
+    memberName = parsedName.data;
+  }
 
   const rows = await db
     .select()
@@ -81,6 +92,7 @@ export async function acceptInvite(
   await db.insert(groupMembers).values({
     groupId: invite.groupId,
     userId: session.user.id,
+    name: memberName,
     role: "member",
   });
 
