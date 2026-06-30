@@ -1,10 +1,6 @@
 "use client";
 
-import { useTransition } from "react";
-import { useRouter } from "next/navigation";
-import { toast } from "sonner";
 import { MoreVertical, Trash2, Receipt } from "lucide-react";
-import { deleteExpense } from "@/server/actions/expenses";
 import type { ExpenseWithSplits } from "@/lib/queries";
 import { formatMoney } from "@/lib/currency";
 import { Card } from "@/components/ui/card";
@@ -24,35 +20,20 @@ const SPLIT_LABEL: Record<string, string> = {
 };
 
 export function ExpenseList({
-  groupId,
   baseCurrency,
   expenses,
   names,
   currentUserId,
+  onDelete,
 }: {
-  groupId: string;
   baseCurrency: string;
   expenses: ExpenseWithSplits[];
   names: Record<string, string>;
   currentUserId: string;
+  onDelete: (id: string) => void;
 }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
-
   function nameOf(id: string) {
     return id === currentUserId ? "You" : (names[id] ?? "Someone");
-  }
-
-  function onDelete(id: string) {
-    startTransition(async () => {
-      const res = await deleteExpense(id, groupId);
-      if (res.ok) {
-        toast.success("Expense deleted");
-        router.refresh();
-      } else {
-        toast.error(res.error);
-      }
-    });
   }
 
   if (expenses.length === 0) {
@@ -110,7 +91,6 @@ export function ExpenseList({
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem
                     variant="destructive"
-                    disabled={pending}
                     onClick={() => onDelete(e.id)}
                   >
                     <Trash2 className="size-4" />

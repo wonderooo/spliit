@@ -16,6 +16,7 @@
     "auth:generate": "better-auth generate --config lib/auth.ts --output lib/db/schema.ts"
   },
   "dependencies": {
+    "@google/genai": "^2.10.0",
     "@neondatabase/serverless": "^1.1.0",
     "@radix-ui/react-slot": "^1.3.0",
     "@react-three/fiber": "^9.6.1",

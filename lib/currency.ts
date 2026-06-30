@@ -55,6 +55,10 @@ const CURRENCY_MAP: Record<string, CurrencyMeta> = Object.fromEntries(
   CURRENCIES.map((c) => [c.code, c]),
 );
 
+export function isKnownCurrency(code: string): boolean {
+  return code in CURRENCY_MAP;
+}
+
 export function getCurrency(code: string): CurrencyMeta {
   return (
     CURRENCY_MAP[code] ?? { code, name: code, symbol: code, decimals: 2 }

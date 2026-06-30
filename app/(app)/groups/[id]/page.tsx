@@ -4,8 +4,7 @@ import {
   getGroupExpenses,
   getGroupMembers,
 } from "@/lib/queries";
-import { ExpenseForm } from "@/components/expense-form";
-import { ExpenseList } from "@/components/expense-list";
+import { ExpensesView } from "@/components/expenses-view";
 
 export const dynamic = "force-dynamic";
 
@@ -24,23 +23,13 @@ export default async function GroupExpensesPage({
   ]);
   if (!group) return null;
 
-  const names = Object.fromEntries(members.map((m) => [m.id, m.name]));
-
   return (
-    <div className="flex flex-col gap-4">
-      <ExpenseForm
-        groupId={id}
-        baseCurrency={group.baseCurrency}
-        members={members}
-        currentUserId={user.id}
-      />
-      <ExpenseList
-        groupId={id}
-        baseCurrency={group.baseCurrency}
-        expenses={expenses}
-        names={names}
-        currentUserId={user.id}
-      />
-    </div>
+    <ExpensesView
+      groupId={id}
+      baseCurrency={group.baseCurrency}
+      members={members}
+      currentUserId={user.id}
+      expenses={expenses}
+    />
   );
 }

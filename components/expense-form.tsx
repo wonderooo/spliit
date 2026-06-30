@@ -1,13 +1,12 @@
 "use client";
 
-import { useEffect, useMemo, useState, useTransition } from "react";
-import { useRouter } from "next/navigation";
+import { useEffect, useMemo, useState } from "react";
 import { toast } from "sonner";
 import { Plus } from "lucide-react";
-import { createExpense } from "@/server/actions/expenses";
 import { getSuggestedRate } from "@/server/actions/fx";
 import type { MemberUser } from "@/lib/queries";
 import type { SplitType } from "@/lib/db/schema";
+import type { CreateExpenseInput } from "@/lib/validators";
 import { toMinorUnits, formatMoney, convertMinorUnits } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -29,6 +28,7 @@ import {
   SheetTrigger,
 } from "@/components/ui/sheet";
 import { CurrencyPicker } from "@/components/currency-picker";
+import { ReceiptScanner, type ScanResult } from "@/components/receipt-scanner";
 import { cn } from "@/lib/utils";
 
 const SPLIT_LABELS: Record<SplitType, string> = {
@@ -49,15 +49,18 @@ export function ExpenseForm({
   baseCurrency,
   members,
   currentUserId,
+  onSubmitExpense,
 }: {
   groupId: string;
   baseCurrency: string;
   members: MemberUser[];
   currentUserId: string;
+  onSubmitExpense: (
+    input: CreateExpenseInput,
+  ) => Promise<{ ok: boolean; error?: string }>;
 }) {
-  const router = useRouter();
   const [open, setOpen] = useState(false);
-  const [pending, startTransition] = useTransition();
+  const [saving, setSaving] = useState(false);
 
   const [description, setDescription] = useState("");
   const [amount, setAmount] = useState("");
@@ -123,7 +126,7 @@ export function ExpenseForm({
     setFxRate("1");
   }
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!splitState.valid) {
       toast.error(splitState.message);
@@ -136,27 +139,42 @@ export function ExpenseForm({
       return { userId: m.id, value: raw };
     });
 
-    startTransition(async () => {
-      const res = await createExpense({
-        groupId,
-        description,
-        amount: amountNum,
-        currency,
-        paidBy,
-        date,
-        splitType,
-        fxRate: Number(fxRate) || 1,
-        splits,
-      });
-      if (res.ok) {
-        toast.success("Expense added");
-        setOpen(false);
-        reset();
-        router.refresh();
-      } else {
-        toast.error(res.error);
-      }
-    });
+    const input: CreateExpenseInput = {
+      groupId,
+      description,
+      category: "",
+      amount: amountNum,
+      currency,
+      paidBy,
+      date,
+      splitType,
+      fxRate: Number(fxRate) || 1,
+      splits,
+    };
+
+    // Close instantly — the parent shows the expense optimistically.
+    setSaving(true);
+    setOpen(false);
+    const res = await onSubmitExpense(input);
+    setSaving(false);
+
+    if (res.ok) {
+      reset();
+    } else {
+      toast.error(res.error ?? "Could not add expense.");
+      setOpen(true); // reopen so the user can fix and retry (values preserved)
+    }
+  }
+
+  function applyScan(result: ScanResult) {
+    setSplitType("exact");
+    setCurrency(result.currency);
+    setAmount(String(result.totalMajor));
+    setSelected(new Set(result.splits.map((s) => s.userId)));
+    setValues(
+      Object.fromEntries(result.splits.map((s) => [s.userId, String(s.valueMajor)])),
+    );
+    if (!description.trim()) setDescription("Receipt");
   }
 
   return (
@@ -182,6 +200,15 @@ export function ExpenseForm({
           onSubmit={onSubmit}
           className="flex flex-col gap-4 overflow-y-auto px-4 pb-2"
         >
+          <div className="flex justify-end">
+            <ReceiptScanner
+              currency={currency}
+              members={members}
+              currentUserId={currentUserId}
+              onApply={applyScan}
+            />
+          </div>
+
           <div className="flex flex-col gap-2">
             <Label htmlFor="desc">Description</Label>
             <Input
@@ -370,9 +397,9 @@ export function ExpenseForm({
           <SheetFooter className="px-0">
             <Button
               type="submit"
-              disabled={pending || !description.trim() || amountNum <= 0}
+              disabled={saving || !description.trim() || amountNum <= 0}
             >
-              {pending ? "Saving…" : "Add expense"}
+              {saving ? "Saving…" : "Add expense"}
             </Button>
           </SheetFooter>
         </form>

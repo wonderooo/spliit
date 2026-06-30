@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowRight, Plus, Trash2, PartyPopper } from "lucide-react";
@@ -58,6 +58,18 @@ function todayISO() {
   return new Date(d.getTime() - tz).toISOString().slice(0, 10);
 }
 
+type RecordPayload = {
+  fromUserId: string;
+  toUserId: string;
+  amountMajor: number;
+  currency: string;
+  fxRate: number;
+  date: string;
+  note: string;
+};
+
+let tempSeq = 0;
+
 export function SettleUp({
   groupId,
   baseCurrency,
@@ -76,6 +88,20 @@ export function SettleUp({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [prefill, setPrefill] = useState<Prefill | null>(null);
+  const [, startTransition] = useTransition();
+
+  const [optimistic, applyOptimistic] = useOptimistic(
+    settlements,
+    (
+      state,
+      action:
+        | { type: "add"; settlement: SettlementRow }
+        | { type: "delete"; id: string },
+    ) =>
+      action.type === "add"
+        ? [action.settlement, ...state]
+        : state.filter((s) => s.id !== action.id),
+  );
 
   const nameOf = (uid: string) =>
     uid === currentUserId
@@ -85,6 +111,68 @@ export function SettleUp({
   function openWith(p: Prefill | null) {
     setPrefill(p);
     setOpen(true);
+  }
+
+  function recordPayment(p: RecordPayload) {
+    return new Promise<{ ok: boolean; error?: string }>((resolve) => {
+      startTransition(async () => {
+        let amountMinor = 0;
+        try {
+          amountMinor = toMinorUnits(String(p.amountMajor), p.currency);
+        } catch {
+          amountMinor = 0;
+        }
+        const baseAmount = convertMinorUnits(
+          amountMinor,
+          p.fxRate,
+          p.currency,
+          baseCurrency,
+        );
+        applyOptimistic({
+          type: "add",
+          settlement: {
+            id: `optimistic-${tempSeq++}`,
+            fromUserId: p.fromUserId,
+            toUserId: p.toUserId,
+            amount: amountMinor,
+            currency: p.currency,
+            baseAmount,
+            date: p.date,
+            note: p.note || null,
+          },
+        });
+        const res = await recordSettlement({
+          groupId,
+          fromUserId: p.fromUserId,
+          toUserId: p.toUserId,
+          amount: p.amountMajor,
+          currency: p.currency,
+          fxRate: p.fxRate,
+          date: p.date,
+          note: p.note,
+        });
+        if (res.ok) {
+          toast.success("Payment recorded");
+          router.refresh();
+          resolve({ ok: true });
+        } else {
+          resolve({ ok: false, error: res.error });
+        }
+      });
+    });
+  }
+
+  function deletePayment(id: string) {
+    startTransition(async () => {
+      applyOptimistic({ type: "delete", id });
+      const res = await deleteSettlement(id, groupId);
+      if (res.ok) {
+        toast.success("Payment removed");
+        router.refresh();
+      } else {
+        toast.error(res.error);
+      }
+    });
   }
 
   return (
@@ -155,20 +243,20 @@ export function SettleUp({
       </section>
 
       {/* Payment history */}
-      {settlements.length > 0 && (
+      {optimistic.length > 0 && (
         <section className="flex flex-col gap-2">
           <h2 className="text-sm font-semibold text-muted-foreground">
             Payment history
           </h2>
           <Card className="gap-0 p-0">
             <ul className="divide-y">
-              {settlements.map((s) => (
+              {optimistic.map((s) => (
                 <SettlementItem
                   key={s.id}
                   settlement={s}
-                  groupId={groupId}
                   baseCurrency={baseCurrency}
                   nameOf={nameOf}
+                  onDelete={deletePayment}
                 />
               ))}
             </ul>
@@ -180,10 +268,10 @@ export function SettleUp({
         open={open}
         onOpenChange={setOpen}
         prefill={prefill}
-        groupId={groupId}
         baseCurrency={baseCurrency}
         members={members}
         currentUserId={currentUserId}
+        onRecord={recordPayment}
       />
     </div>
   );
@@ -191,30 +279,16 @@ export function SettleUp({
 
 function SettlementItem({
   settlement: s,
-  groupId,
   baseCurrency,
   nameOf,
+  onDelete,
 }: {
   settlement: SettlementRow;
-  groupId: string;
   baseCurrency: string;
   nameOf: (uid: string) => string;
+  onDelete: (id: string) => void;
 }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
   const foreign = s.currency !== baseCurrency;
-
-  function onDelete() {
-    startTransition(async () => {
-      const res = await deleteSettlement(s.id, groupId);
-      if (res.ok) {
-        toast.success("Payment removed");
-        router.refresh();
-      } else {
-        toast.error(res.error);
-      }
-    });
-  }
 
   return (
     <li className="flex items-center gap-2 px-4 py-3">
@@ -240,8 +314,7 @@ function SettlementItem({
         ) : null}
       </div>
       <button
-        onClick={onDelete}
-        disabled={pending}
+        onClick={() => onDelete(s.id)}
         className="rounded-md p-1 text-muted-foreground hover:text-rose-500"
         aria-label="Delete payment"
       >
@@ -255,21 +328,20 @@ function SettleDialog({
   open,
   onOpenChange,
   prefill,
-  groupId,
   baseCurrency,
   members,
   currentUserId,
+  onRecord,
 }: {
   open: boolean;
   onOpenChange: (v: boolean) => void;
   prefill: Prefill | null;
-  groupId: string;
   baseCurrency: string;
   members: MemberUser[];
   currentUserId: string;
+  onRecord: (p: RecordPayload) => Promise<{ ok: boolean; error?: string }>;
 }) {
-  const router = useRouter();
-  const [pending, startTransition] = useTransition();
+  const [saving, setSaving] = useState(false);
 
   const [fromUserId, setFromUserId] = useState(currentUserId);
   const [toUserId, setToUserId] = useState("");
@@ -321,31 +393,34 @@ function SettleDialog({
     }
   })();
 
-  function onSubmit(e: React.FormEvent) {
+  async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
+    if (!toUserId) {
+      toast.error("Pick who received the payment.");
+      return;
+    }
     if (fromUserId === toUserId) {
       toast.error("Payer and recipient must differ.");
       return;
     }
-    startTransition(async () => {
-      const res = await recordSettlement({
-        groupId,
-        fromUserId,
-        toUserId,
-        amount: amountNum,
-        currency,
-        fxRate: Number(fxRate) || 1,
-        date,
-        note,
-      });
-      if (res.ok) {
-        toast.success("Payment recorded");
-        onOpenChange(false);
-        router.refresh();
-      } else {
-        toast.error(res.error);
-      }
+
+    // Close instantly — the payment shows in history optimistically.
+    setSaving(true);
+    onOpenChange(false);
+    const res = await onRecord({
+      fromUserId,
+      toUserId,
+      amountMajor: amountNum,
+      currency,
+      fxRate: Number(fxRate) || 1,
+      date,
+      note,
     });
+    setSaving(false);
+    if (!res.ok) {
+      toast.error(res.error ?? "Could not record payment.");
+      onOpenChange(true);
+    }
   }
 
   return (
@@ -463,9 +538,9 @@ function SettleDialog({
           <DialogFooter>
             <Button
               type="submit"
-              disabled={pending || amountNum <= 0 || !toUserId}
+              disabled={saving || amountNum <= 0 || !toUserId}
             >
-              {pending ? "Saving…" : "Record payment"}
+              {saving ? "Saving…" : "Record payment"}
             </Button>
           </DialogFooter>
         </form>

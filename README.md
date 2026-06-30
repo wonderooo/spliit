@@ -35,6 +35,7 @@ Built to run entirely on **Next.js** and deploy to **Vercel's free tier**.
 - **Multi-currency**: each expense keeps its original currency + the exchange
   rate used; a cached base-currency amount drives balances. Rates auto-fill from
   Frankfurter (`lib/fx.ts`) and are editable per expense.
+- **Receipt scanning** uses **Google Gemini Flash** (free tier via [AI Studio](https://aistudio.google.com/apikey)). The photo is downscaled client-side, sent to a server route (`/api/scan-receipt`) that calls Gemini with a JSON schema, and returns structured line items. You tap which members shared each item, tax/tip are distributed proportionally, and the result is applied as an **exact split**. Needs `GEMINI_API_KEY`; the feature is simply hidden/erroring-gracefully without it.
 - The core money/split/balance logic is **pure and unit-tested** (`pnpm test`).
 
 ## Local setup

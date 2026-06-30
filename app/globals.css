@@ -128,3 +128,13 @@
     @apply font-sans;
   }
 }
+
+/* Indeterminate progress bar (used while a receipt scan is in flight). */
+@keyframes indeterminate-bar {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(350%);
+  }
+}
