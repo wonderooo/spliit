@@ -24,16 +24,16 @@ import {
   SelectValue,
 } from "@/components/ui/select";
 import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetFooter,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 import { CurrencyPicker } from "@/components/currency-picker";
-import { ReceiptScanner, type ScanResult } from "@/components/receipt-scanner";
+import { type ScanResult } from "@/components/receipt-scanner";
 import { useT } from "@/components/i18n-provider";
 import { errorText } from "@/lib/action-result";
 import { format } from "@/lib/i18n/config";
@@ -62,6 +62,7 @@ export function ExpenseForm({
   currentUserId,
   onSubmitExpense,
   expense,
+  initialScan,
   open: controlledOpen,
   onOpenChange,
 }: {
@@ -74,6 +75,8 @@ export function ExpenseForm({
   ) => Promise<{ ok: boolean; error?: string }>;
   /** When provided, the form edits this expense instead of creating one. */
   expense?: ExpenseWithSplits;
+  /** Pre-fills a new expense from a scanned receipt (create mode only). */
+  initialScan?: ScanResult;
   /** Controlled open state (used for edit; create mode manages its own). */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -88,23 +91,43 @@ export function ExpenseForm({
   const setOpen = isControlled ? onOpenChange! : setInternalOpen;
   const [saving, setSaving] = useState(false);
 
-  const [description, setDescription] = useState(expense?.description ?? "");
-  const [amount, setAmount] = useState(
-    expense ? String(toMajorUnits(expense.amount, expense.currency)) : "",
+  // A scanned receipt seeds a brand-new expense; it never applies when editing.
+  const scan = expense ? undefined : initialScan;
+
+  const [description, setDescription] = useState(
+    expense?.description ??
+      (scan ? scan.merchant?.trim() || t.expenseForm.defaultDescription : ""),
   );
-  const [currency, setCurrency] = useState(expense?.currency ?? baseCurrency);
+  const [amount, setAmount] = useState(
+    expense
+      ? String(toMajorUnits(expense.amount, expense.currency))
+      : scan
+        ? String(scan.totalMajor)
+        : "",
+  );
+  const [currency, setCurrency] = useState(
+    expense?.currency ?? scan?.currency ?? baseCurrency,
+  );
   const [paidBy, setPaidBy] = useState(expense?.paidBy ?? currentUserId);
   const [date, setDate] = useState(expense?.date ?? todayISO());
   const [splitType, setSplitType] = useState<SplitType>(
-    (expense?.splitType as SplitType) ?? "equal",
+    (expense?.splitType as SplitType) ?? (scan ? "exact" : "equal"),
   );
   const [selected, setSelected] = useState<Set<string>>(
     expense
       ? new Set(expense.splits.map((s) => s.userId))
-      : new Set(members.map((m) => m.id)),
+      : scan
+        ? new Set(scan.splits.map((s) => s.userId))
+        : new Set(members.map((m) => m.id)),
   );
   const [values, setValues] = useState<Record<string, string>>(
-    expense ? initialEditValues(expense) : {},
+    expense
+      ? initialEditValues(expense)
+      : scan
+        ? Object.fromEntries(
+            scan.splits.map((s) => [s.userId, String(s.valueMajor)]),
+          )
+        : {},
   );
   const [fxRate, setFxRate] = useState(expense?.fxRate ?? "1");
 
@@ -214,52 +237,25 @@ export function ExpenseForm({
     }
   }
 
-  function applyScan(result: ScanResult) {
-    setSplitType("exact");
-    setCurrency(result.currency);
-    setAmount(String(result.totalMajor));
-    setSelected(new Set(result.splits.map((s) => s.userId)));
-    setValues(
-      Object.fromEntries(result.splits.map((s) => [s.userId, String(s.valueMajor)])),
-    );
-    if (!description.trim())
-      setDescription(result.merchant?.trim() || t.expenseForm.defaultDescription);
-  }
-
   return (
-    <Sheet open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={setOpen}>
       {!isControlled && (
-        <SheetTrigger asChild>
+        <DialogTrigger asChild>
           <Button className="w-full sm:w-auto">
             <Plus className="size-4" />
             {t.expenseForm.addExpense}
           </Button>
-        </SheetTrigger>
+        </DialogTrigger>
       )}
-      <SheetContent
-        side="bottom"
-        className="max-h-[92svh] overflow-y-auto rounded-t-2xl sm:max-w-lg"
-      >
-        <SheetHeader>
-          <SheetTitle>
+      <DialogContent className="max-h-[92svh] gap-4 overflow-y-auto sm:max-w-lg">
+        <DialogHeader>
+          <DialogTitle>
             {isEdit ? t.expenseForm.editExpense : t.expenseForm.addExpense}
-          </SheetTitle>
-          <SheetDescription>{t.expenseForm.description}</SheetDescription>
-        </SheetHeader>
+          </DialogTitle>
+          <DialogDescription>{t.expenseForm.description}</DialogDescription>
+        </DialogHeader>
 
-        <form
-          onSubmit={onSubmit}
-          className="flex flex-col gap-4 overflow-y-auto px-4 pb-2"
-        >
-          <div className="flex justify-end">
-            <ReceiptScanner
-              currency={currency}
-              members={members}
-              currentUserId={currentUserId}
-              onApply={applyScan}
-            />
-          </div>
-
+        <form onSubmit={onSubmit} className="flex flex-col gap-4">
           <div className="flex flex-col gap-2">
             <Label htmlFor="desc">{t.expenseForm.descriptionLabel}</Label>
             <Input
@@ -450,7 +446,7 @@ export function ExpenseForm({
             {splitState.message}
           </p>
 
-          <SheetFooter className="px-0">
+          <DialogFooter>
             <Button
               type="submit"
               disabled={saving || !description.trim() || amountNum <= 0}
@@ -461,10 +457,10 @@ export function ExpenseForm({
                   ? t.expenseForm.saveChanges
                   : t.expenseForm.addExpense}
             </Button>
-          </SheetFooter>
+          </DialogFooter>
         </form>
-      </SheetContent>
-    </Sheet>
+      </DialogContent>
+    </Dialog>
   );
 }
 

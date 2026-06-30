@@ -12,6 +12,7 @@ import type { ExpenseWithSplits, MemberUser } from "@/lib/queries";
 import type { CreateExpenseInput } from "@/lib/validators";
 import { toMinorUnits, convertMinorUnits } from "@/lib/currency";
 import { ExpenseForm } from "@/components/expense-form";
+import { ReceiptScanner, type ScanResult } from "@/components/receipt-scanner";
 import { ExpenseList } from "@/components/expense-list";
 import { useT } from "@/components/i18n-provider";
 import { errorText } from "@/lib/action-result";
@@ -40,6 +41,15 @@ export function ExpensesView({
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [editing, setEditing] = useState<ExpenseWithSplits | null>(null);
+  const [scanSeed, setScanSeed] = useState<ScanResult | null>(null);
+
+  // Open the prefilled form only after the scanner dialog has fully closed.
+  // Two modal dialogs open at once corrupt Radix's shared pointer-events lock:
+  // the form captures the scanner's `pointer-events: none` as the body's
+  // "original" value and restores that on close, leaving the page dead.
+  function onScanApplied(result: ScanResult) {
+    window.setTimeout(() => setScanSeed(result), 200);
+  }
 
   const [optimistic, applyOptimistic] = useOptimistic(
     expenses,
@@ -140,13 +150,35 @@ export function ExpensesView({
 
   return (
     <div className="flex flex-col gap-4">
-      <ExpenseForm
-        groupId={groupId}
-        baseCurrency={baseCurrency}
-        members={members}
-        currentUserId={currentUserId}
-        onSubmitExpense={submitExpense}
-      />
+      <div className="flex flex-col gap-2 sm:flex-row">
+        <ExpenseForm
+          groupId={groupId}
+          baseCurrency={baseCurrency}
+          members={members}
+          currentUserId={currentUserId}
+          onSubmitExpense={submitExpense}
+        />
+        <ReceiptScanner
+          currency={baseCurrency}
+          members={members}
+          currentUserId={currentUserId}
+          onApply={onScanApplied}
+        />
+      </div>
+      {scanSeed && (
+        <ExpenseForm
+          groupId={groupId}
+          baseCurrency={baseCurrency}
+          members={members}
+          currentUserId={currentUserId}
+          initialScan={scanSeed}
+          open
+          onOpenChange={(o) => {
+            if (!o) setScanSeed(null);
+          }}
+          onSubmitExpense={submitExpense}
+        />
+      )}
       <ExpenseList
         baseCurrency={baseCurrency}
         expenses={optimistic}

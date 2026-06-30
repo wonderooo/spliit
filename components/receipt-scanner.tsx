@@ -291,12 +291,12 @@ export function ReceiptScanner({
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogTrigger asChild>
-        <Button type="button" variant="outline" size="sm">
+        <Button type="button" variant="outline" className="w-full sm:w-auto">
           <ScanLine className="size-4" />
           {t.receipt.scanReceipt}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-h-[92svh] gap-4 overflow-y-auto">
+      <DialogContent className="max-h-[92svh] gap-4 overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>{t.receipt.dialogTitle}</DialogTitle>
           <DialogDescription>{t.receipt.dialogDescription}</DialogDescription>
@@ -498,10 +498,10 @@ export function ReceiptScanner({
                   .map(([uid, minor]) => (
                     <li
                       key={uid}
-                      className="flex justify-between text-xs text-muted-foreground"
+                      className="flex justify-between gap-2 text-xs text-muted-foreground"
                     >
-                      <span>{nameOf(uid)}</span>
-                      <span className="tabular-nums">
+                      <span className="truncate">{nameOf(uid)}</span>
+                      <span className="shrink-0 tabular-nums">
                         {formatMoney(minor, scanCurrency)}
                       </span>
                     </li>
