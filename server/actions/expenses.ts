@@ -1,0 +1,112 @@
+"use server";
+
+import { revalidatePath } from "next/cache";
+import { eq } from "drizzle-orm";
+import { db } from "@/lib/db";
+import { expenses, expenseSplits } from "@/lib/db/schema";
+import { getSession } from "@/lib/session";
+import { getGroup, getGroupMembers, getMembership } from "@/lib/queries";
+import { createExpenseSchema } from "@/lib/validators";
+import { toMinorUnits, convertMinorUnits } from "@/lib/currency";
+import { computeSplits } from "@/lib/splits";
+import { ok, fail, type ActionResult } from "@/lib/action-result";
+
+export async function createExpense(input: unknown): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session?.user) return fail("You must be signed in.");
+
+  const parsed = createExpenseSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail(parsed.error.issues[0]?.message ?? "Invalid input.");
+  }
+  const data = parsed.data;
+
+  const membership = await getMembership(data.groupId, session.user.id);
+  if (!membership) return fail("You are not a member of this group.");
+
+  const group = await getGroup(data.groupId);
+  if (!group) return fail("Group not found.");
+
+  const members = await getGroupMembers(data.groupId);
+  const memberIds = new Set(members.map((m) => m.id));
+  if (!memberIds.has(data.paidBy)) {
+    return fail("Payer must be a group member.");
+  }
+  if (!data.splits.every((s) => memberIds.has(s.userId))) {
+    return fail("All participants must be group members.");
+  }
+
+  // Amount in minor units of the expense currency.
+  const totalMinor = toMinorUnits(data.amount, data.currency);
+
+  // For exact splits the entered values are major units -> convert to minor.
+  const participants =
+    data.splitType === "exact"
+      ? data.splits.map((s) => ({
+          userId: s.userId,
+          value: toMinorUnits(s.value ?? 0, data.currency),
+        }))
+      : data.splits;
+
+  let computed;
+  try {
+    computed = computeSplits(totalMinor, data.splitType, participants);
+  } catch (e) {
+    return fail(e instanceof Error ? e.message : "Could not split the expense.");
+  }
+
+  const baseAmount = convertMinorUnits(
+    totalMinor,
+    data.fxRate,
+    data.currency,
+    group.baseCurrency,
+  );
+
+  const expenseId = crypto.randomUUID();
+
+  await db.batch([
+    db.insert(expenses).values({
+      id: expenseId,
+      groupId: data.groupId,
+      description: data.description,
+      category: data.category || null,
+      amount: totalMinor,
+      currency: data.currency,
+      paidBy: data.paidBy,
+      splitType: data.splitType,
+      fxRate: String(data.fxRate),
+      baseAmount,
+      date: data.date,
+      createdBy: session.user.id,
+    }),
+    db.insert(expenseSplits).values(
+      computed.map((c) => ({
+        expenseId,
+        userId: c.userId,
+        amount: c.amount,
+        shareValue: c.shareValue === null ? null : String(c.shareValue),
+      })),
+    ),
+  ]);
+
+  revalidatePath(`/groups/${data.groupId}`);
+  revalidatePath("/dashboard");
+  return ok();
+}
+
+export async function deleteExpense(
+  expenseId: string,
+  groupId: string,
+): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session?.user) return fail("You must be signed in.");
+
+  const membership = await getMembership(groupId, session.user.id);
+  if (!membership) return fail("You are not a member of this group.");
+
+  await db.delete(expenses).where(eq(expenses.id, expenseId));
+
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath("/dashboard");
+  return ok();
+}

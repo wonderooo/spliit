@@ -1,65 +1,92 @@
-import Image from "next/image";
+import { redirect } from "next/navigation";
+import { getSession } from "@/lib/session";
+import { ShaderHero } from "@/components/shader-hero";
+import { SignInButton } from "@/components/sign-in-button";
+import { GradientHeading } from "@/components/ui/gradient-heading";
+import TextAnimate from "@/components/ui/text-animate";
+import { Users, Wallet, Globe, Scale } from "lucide-react";
 
-export default function Home() {
+const features = [
+  {
+    icon: Users,
+    title: "Shared groups",
+    body: "Spin up a group for your trip, flat, or dinner crew and invite people with a link.",
+  },
+  {
+    icon: Scale,
+    title: "Split any way",
+    body: "Equally, by exact amounts, by percentage, or by shares — the math always balances.",
+  },
+  {
+    icon: Globe,
+    title: "Multi-currency",
+    body: "Log expenses in any currency. Daily rates are fetched automatically, override anytime.",
+  },
+  {
+    icon: Wallet,
+    title: "Settle up simply",
+    body: "See who owes whom and the fewest payments needed to clear every debt.",
+  },
+];
+
+export default async function LandingPage() {
+  const session = await getSession();
+  if (session?.user) redirect("/dashboard");
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
-            >
-              Learning
-            </a>{" "}
-            center.
-          </p>
-        </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
+    <main className="relative flex flex-col">
+      {/* Hero */}
+      <section className="relative flex min-h-[88svh] flex-col items-center justify-center overflow-hidden px-5 py-16 text-center">
+        <ShaderHero />
+        <div className="absolute inset-0 bg-black/30" aria-hidden />
+        <div className="relative z-10 flex max-w-2xl flex-col items-center gap-6">
+          <span className="rounded-full border border-white/20 bg-white/10 px-3 py-1 text-xs font-medium text-white/90 backdrop-blur">
+            ✦ Split expenses without the spreadsheet
+          </span>
+          <GradientHeading
+            size="xxl"
+            weight="black"
+            variant="light"
+            className="!text-white"
           >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
+            Spliit
+          </GradientHeading>
+          <TextAnimate
+            text="Track group spending, split it fairly, settle up in seconds."
+            type="fadeIn"
+            className="text-balance text-lg font-medium text-white/90 sm:text-xl"
+          />
+          <div className="mt-2 flex flex-col items-center gap-3">
+            <SignInButton size="lg" className="h-12 px-6 text-base shadow-xl" />
+            <p className="text-xs text-white/70">
+              Free to use. Sign in with Google to get started.
+            </p>
+          </div>
         </div>
-      </main>
-    </div>
+      </section>
+
+      {/* Features */}
+      <section className="mx-auto w-full max-w-5xl px-5 py-16">
+        <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+          {features.map((f) => (
+            <div
+              key={f.title}
+              className="rounded-2xl border bg-card p-5 transition-colors hover:border-foreground/20"
+            >
+              <div className="mb-3 inline-flex size-10 items-center justify-center rounded-xl bg-primary/10 text-primary">
+                <f.icon className="size-5" />
+              </div>
+              <h3 className="text-base font-semibold">{f.title}</h3>
+              <p className="mt-1 text-sm text-muted-foreground">{f.body}</p>
+            </div>
+          ))}
+        </div>
+      </section>
+
+      <footer className="mt-auto border-t px-5 py-8 text-center text-sm text-muted-foreground">
+        Built with Next.js, better-auth, and Drizzle. Splits your bills, not your
+        friendships.
+      </footer>
+    </main>
   );
 }

@@ -1,0 +1,289 @@
+import {
+  pgTable,
+  text,
+  timestamp,
+  boolean,
+  bigint,
+  numeric,
+  uuid,
+  date,
+  unique,
+  index,
+} from "drizzle-orm/pg-core";
+import { relations } from "drizzle-orm";
+
+/* -------------------------------------------------------------------------- */
+/*  better-auth tables (shape matches `@better-auth/cli generate` output)     */
+/* -------------------------------------------------------------------------- */
+
+export const user = pgTable("user", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull().unique(),
+  emailVerified: boolean("email_verified")
+    .$defaultFn(() => false)
+    .notNull(),
+  image: text("image"),
+  createdAt: timestamp("created_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+  updatedAt: timestamp("updated_at")
+    .$defaultFn(() => new Date())
+    .notNull(),
+});
+
+export const session = pgTable("session", {
+  id: text("id").primaryKey(),
+  expiresAt: timestamp("expires_at").notNull(),
+  token: text("token").notNull().unique(),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+  ipAddress: text("ip_address"),
+  userAgent: text("user_agent"),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+});
+
+export const account = pgTable("account", {
+  id: text("id").primaryKey(),
+  accountId: text("account_id").notNull(),
+  providerId: text("provider_id").notNull(),
+  userId: text("user_id")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  accessToken: text("access_token"),
+  refreshToken: text("refresh_token"),
+  idToken: text("id_token"),
+  accessTokenExpiresAt: timestamp("access_token_expires_at"),
+  refreshTokenExpiresAt: timestamp("refresh_token_expires_at"),
+  scope: text("scope"),
+  password: text("password"),
+  createdAt: timestamp("created_at").notNull(),
+  updatedAt: timestamp("updated_at").notNull(),
+});
+
+export const verification = pgTable("verification", {
+  id: text("id").primaryKey(),
+  identifier: text("identifier").notNull(),
+  value: text("value").notNull(),
+  expiresAt: timestamp("expires_at").notNull(),
+  createdAt: timestamp("created_at").$defaultFn(() => new Date()),
+  updatedAt: timestamp("updated_at").$defaultFn(() => new Date()),
+});
+
+/* -------------------------------------------------------------------------- */
+/*  Application tables                                                        */
+/* -------------------------------------------------------------------------- */
+
+export const splitTypes = ["equal", "exact", "percentage", "shares"] as const;
+export type SplitType = (typeof splitTypes)[number];
+
+export const memberRoles = ["owner", "member"] as const;
+export type MemberRole = (typeof memberRoles)[number];
+
+export const inviteStatuses = ["pending", "accepted", "revoked"] as const;
+export type InviteStatus = (typeof inviteStatuses)[number];
+
+export const groups = pgTable("groups", {
+  id: uuid("id").defaultRandom().primaryKey(),
+  name: text("name").notNull(),
+  description: text("description"),
+  /** ISO 4217 base currency of the group (e.g. "USD"). */
+  baseCurrency: text("base_currency").notNull(),
+  createdBy: text("created_by")
+    .notNull()
+    .references(() => user.id, { onDelete: "cascade" }),
+  createdAt: timestamp("created_at").defaultNow().notNull(),
+});
+
+export const groupMembers = pgTable(
+  "group_members",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    role: text("role").$type<MemberRole>().default("member").notNull(),
+    joinedAt: timestamp("joined_at").defaultNow().notNull(),
+  },
+  (t) => [
+    unique("group_members_group_user_unique").on(t.groupId, t.userId),
+    index("group_members_group_idx").on(t.groupId),
+    index("group_members_user_idx").on(t.userId),
+  ],
+);
+
+export const invitations = pgTable(
+  "invitations",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    email: text("email"),
+    token: text("token").notNull().unique(),
+    invitedBy: text("invited_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    status: text("status").$type<InviteStatus>().default("pending").notNull(),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+    expiresAt: timestamp("expires_at").notNull(),
+  },
+  (t) => [index("invitations_group_idx").on(t.groupId)],
+);
+
+export const expenses = pgTable(
+  "expenses",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    description: text("description").notNull(),
+    category: text("category"),
+    /** Total amount in minor units of `currency` (e.g. cents). */
+    amount: bigint("amount", { mode: "number" }).notNull(),
+    /** ISO 4217 currency the expense was incurred in. */
+    currency: text("currency").notNull(),
+    /** Member who paid for the expense. */
+    paidBy: text("paid_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    splitType: text("split_type").$type<SplitType>().notNull(),
+    /** Exchange rate currency -> group.baseCurrency at expense date. */
+    fxRate: numeric("fx_rate", { precision: 24, scale: 10 })
+      .notNull()
+      .default("1"),
+    /** Cached amount converted to the group base currency, minor units. */
+    baseAmount: bigint("base_amount", { mode: "number" }).notNull(),
+    date: date("date").notNull(),
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [index("expenses_group_idx").on(t.groupId)],
+);
+
+export const expenseSplits = pgTable(
+  "expense_splits",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    expenseId: uuid("expense_id")
+      .notNull()
+      .references(() => expenses.id, { onDelete: "cascade" }),
+    userId: text("user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    /** This member's share of the expense, minor units in expense currency. */
+    amount: bigint("amount", { mode: "number" }).notNull(),
+    /** Raw input used to compute the share (percentage or weight) for editing. */
+    shareValue: numeric("share_value", { precision: 24, scale: 6 }),
+  },
+  (t) => [
+    unique("expense_splits_expense_user_unique").on(t.expenseId, t.userId),
+    index("expense_splits_expense_idx").on(t.expenseId),
+  ],
+);
+
+export const settlements = pgTable(
+  "settlements",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    groupId: uuid("group_id")
+      .notNull()
+      .references(() => groups.id, { onDelete: "cascade" }),
+    fromUserId: text("from_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    toUserId: text("to_user_id")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
+    amount: bigint("amount", { mode: "number" }).notNull(),
+    currency: text("currency").notNull(),
+    fxRate: numeric("fx_rate", { precision: 24, scale: 10 })
+      .notNull()
+      .default("1"),
+    baseAmount: bigint("base_amount", { mode: "number" }).notNull(),
+    date: date("date").notNull(),
+    note: text("note"),
+    createdAt: timestamp("created_at").defaultNow().notNull(),
+  },
+  (t) => [index("settlements_group_idx").on(t.groupId)],
+);
+
+export const exchangeRates = pgTable(
+  "exchange_rates",
+  {
+    id: uuid("id").defaultRandom().primaryKey(),
+    date: date("date").notNull(),
+    base: text("base").notNull(),
+    target: text("target").notNull(),
+    rate: numeric("rate", { precision: 24, scale: 10 }).notNull(),
+    fetchedAt: timestamp("fetched_at").defaultNow().notNull(),
+  },
+  (t) => [unique("exchange_rates_unique").on(t.date, t.base, t.target)],
+);
+
+/* -------------------------------------------------------------------------- */
+/*  Relations                                                                 */
+/* -------------------------------------------------------------------------- */
+
+export const groupsRelations = relations(groups, ({ many, one }) => ({
+  members: many(groupMembers),
+  expenses: many(expenses),
+  settlements: many(settlements),
+  invitations: many(invitations),
+  creator: one(user, { fields: [groups.createdBy], references: [user.id] }),
+}));
+
+export const groupMembersRelations = relations(groupMembers, ({ one }) => ({
+  group: one(groups, {
+    fields: [groupMembers.groupId],
+    references: [groups.id],
+  }),
+  user: one(user, { fields: [groupMembers.userId], references: [user.id] }),
+}));
+
+export const expensesRelations = relations(expenses, ({ one, many }) => ({
+  group: one(groups, { fields: [expenses.groupId], references: [groups.id] }),
+  payer: one(user, { fields: [expenses.paidBy], references: [user.id] }),
+  splits: many(expenseSplits),
+}));
+
+export const expenseSplitsRelations = relations(expenseSplits, ({ one }) => ({
+  expense: one(expenses, {
+    fields: [expenseSplits.expenseId],
+    references: [expenses.id],
+  }),
+  user: one(user, { fields: [expenseSplits.userId], references: [user.id] }),
+}));
+
+export const settlementsRelations = relations(settlements, ({ one }) => ({
+  group: one(groups, {
+    fields: [settlements.groupId],
+    references: [groups.id],
+  }),
+  fromUser: one(user, {
+    fields: [settlements.fromUserId],
+    references: [user.id],
+    relationName: "settlement_from",
+  }),
+  toUser: one(user, {
+    fields: [settlements.toUserId],
+    references: [user.id],
+    relationName: "settlement_to",
+  }),
+}));
+
+export type Group = typeof groups.$inferSelect;
+export type GroupMember = typeof groupMembers.$inferSelect;
+export type Invitation = typeof invitations.$inferSelect;
+export type Expense = typeof expenses.$inferSelect;
+export type ExpenseSplit = typeof expenseSplits.$inferSelect;
+export type Settlement = typeof settlements.$inferSelect;
+export type User = typeof user.$inferSelect;
