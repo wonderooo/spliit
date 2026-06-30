@@ -1,4 +1,4 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
@@ -18,6 +18,16 @@ export const metadata: Metadata = {
   title: "Spliit — split expenses with friends",
   description:
     "Split trip and group expenses in any currency, see who owes what, and settle up in a tap.",
+  applicationName: "Spliit",
+  appleWebApp: {
+    capable: true,
+    title: "Spliit",
+    statusBarStyle: "black-translucent",
+  },
+};
+
+export const viewport: Viewport = {
+  themeColor: "#0b0710",
 };
 
 export default function RootLayout({

@@ -44,6 +44,10 @@ export function ShaderHero({ className }: { className?: string }) {
             transition: "opacity 900ms ease-in-out",
             pointerEvents: "none",
           }}
+          // Stay mounted when the hero scrolls out of view, so returning to the
+          // top shows the gradient instantly instead of re-initializing (which
+          // caused a flash). Default lazyLoad unmounts the WebGL canvas off-screen.
+          lazyLoad={false}
           pixelDensity={1}
           fov={40}
         >

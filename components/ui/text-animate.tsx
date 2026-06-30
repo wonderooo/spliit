@@ -210,7 +210,7 @@ const TextAnimate: FC<Props> = ({
   const ref = useRef(null)
   const isInView = useInView(ref, { once: true })
 
-  const letters = Array.from(text)
+  const words = text.split(" ")
   const { container, child } = animationVariants[type]
 
   const ctrls = useAnimation()
@@ -265,7 +265,11 @@ const TextAnimate: FC<Props> = ({
 
   return (
     <motion.h2
-      style={{ display: "flex", overflow: "hidden" }}
+      style={{
+        display: "flex",
+        flexWrap: "wrap",
+        justifyContent: "center",
+      }}
       role="heading"
       variants={container}
       initial="hidden"
@@ -273,9 +277,16 @@ const TextAnimate: FC<Props> = ({
       className="mt-10 text-4xl font-black text-black dark:text-neutral-100 py-5 pb-8 px-8 md:text-5xl"
       {...props}
     >
-      {letters.map((letter, index) => (
-        <motion.span key={index} variants={child}>
-          {letter === " " ? "\u00A0" : letter}
+      {words.map((word, index) => (
+        // Each word is a no-wrap unit; the flex container wraps between words so
+        // long taglines reflow onto multiple lines instead of being clipped.
+        <motion.span
+          key={index}
+          variants={child}
+          className="inline-block whitespace-nowrap"
+        >
+          {word}
+          {index < words.length - 1 ? "\u00A0" : ""}
         </motion.span>
       ))}
     </motion.h2>
