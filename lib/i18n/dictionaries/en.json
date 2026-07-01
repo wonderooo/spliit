@@ -171,7 +171,9 @@
       "owes": "owes",
       "suggestedPayments": "Suggested payments",
       "allSettledTitle": "Everyone is settled up",
-      "allSettledBody": "No payments needed right now."
+      "allSettledBody": "No payments needed right now.",
+      "settleCtaTitle": "Time to settle up",
+      "settleCtaBody": "See who owes whom and record payments."
     },
     "invite": {
       "reasonInvalid": "This invite link is invalid.",
@@ -272,7 +274,13 @@
     "date": "Date",
     "noteLabel": "Note (optional)",
     "notePlaceholder": "Venmo, cash, …",
-    "saving": "Saving…"
+    "saving": "Saving…",
+    "filterEveryone": "Everyone",
+    "filterMine": "Just me",
+    "noneInvolvingYou": "Nothing involving you.",
+    "noPaymentsYet": "No payments recorded yet.",
+    "deleteTitle": "Delete this payment?",
+    "deleteBody": "The payment {from} → {to} ({amount}) will be removed. This can't be undone."
   },
   "membersPanel": {
     "membersCount": "Members ({count})",

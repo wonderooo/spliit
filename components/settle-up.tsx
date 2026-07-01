@@ -3,7 +3,7 @@
 import { useEffect, useOptimistic, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { ArrowRight, Plus, Trash2, PartyPopper } from "lucide-react";
+import { ArrowRight, Plus, Trash2, PartyPopper, History } from "lucide-react";
 import { recordSettlement, deleteSettlement } from "@/server/actions/settlements";
 import { getSuggestedRate } from "@/server/actions/fx";
 import type { MemberUser } from "@/lib/queries";
@@ -34,9 +34,11 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { CurrencyPicker } from "@/components/currency-picker";
+import { FxRateField } from "@/components/fx-rate-field";
 import { useT } from "@/components/i18n-provider";
 import { errorText } from "@/lib/action-result";
 import { format } from "@/lib/i18n/config";
+import { cn } from "@/lib/utils";
 
 type SettlementRow = {
   id: string;
@@ -92,6 +94,9 @@ export function SettleUp({
   const router = useRouter();
   const [open, setOpen] = useState(false);
   const [prefill, setPrefill] = useState<Prefill | null>(null);
+  const [suggestedMine, setSuggestedMine] = useState(true);
+  const [historyMine, setHistoryMine] = useState(false);
+  const [toDelete, setToDelete] = useState<SettlementRow | null>(null);
   const [, startTransition] = useTransition();
 
   const [optimistic, applyOptimistic] = useOptimistic(
@@ -107,10 +112,50 @@ export function SettleUp({
         : state.filter((s) => s.id !== action.id),
   );
 
+  // Suggested payments come from the server, so without an optimistic layer a
+  // just-settled row lingers until router.refresh() lands. Subtract the paid
+  // base amount from the matching from→to suggestion (drop it once cleared).
+  const [optimisticTx, applyTxOptimistic] = useOptimistic(
+    transactions,
+    (state, paid: { from: string; to: string; baseAmount: number }) => {
+      let remaining = paid.baseAmount;
+      const out: Transaction[] = [];
+      for (const tx of state) {
+        if (remaining > 0 && tx.from === paid.from && tx.to === paid.to) {
+          if (tx.amount > remaining) {
+            out.push({ ...tx, amount: tx.amount - remaining });
+            remaining = 0;
+          } else {
+            remaining -= tx.amount;
+          }
+        } else {
+          out.push(tx);
+        }
+      }
+      return out;
+    },
+  );
+
   const nameOf = (uid: string) =>
     uid === currentUserId
       ? t.common.you
       : (members.find((m) => m.id === uid)?.name ?? t.settleUp.someone);
+
+  // Each list has its own "just me" filter. Only worth offering with 3+
+  // members, since with two everyone is always involved in every payment.
+  const canFilter = members.length > 2;
+  const visibleTransactions =
+    canFilter && suggestedMine
+      ? optimisticTx.filter(
+          (tx) => tx.from === currentUserId || tx.to === currentUserId,
+        )
+      : optimisticTx;
+  const visibleHistory =
+    canFilter && historyMine
+      ? optimistic.filter(
+          (s) => s.fromUserId === currentUserId || s.toUserId === currentUserId,
+        )
+      : optimistic;
 
   function openWith(p: Prefill | null) {
     setPrefill(p);
@@ -144,6 +189,11 @@ export function SettleUp({
             date: p.date,
             note: p.note || null,
           },
+        });
+        applyTxOptimistic({
+          from: p.fromUserId,
+          to: p.toUserId,
+          baseAmount,
         });
         const res = await recordSettlement({
           groupId,
@@ -183,26 +233,31 @@ export function SettleUp({
     <div className="flex flex-col gap-5">
       {/* Suggested payments */}
       <section className="flex flex-col gap-2">
-        <div className="flex items-center justify-between">
+        <div className="flex flex-wrap items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-muted-foreground">
             {t.settleUp.suggestedPayments}
           </h2>
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() =>
-              openWith({
-                fromUserId: currentUserId,
-                toUserId:
-                  members.find((m) => m.id !== currentUserId)?.id ??
-                  currentUserId,
-                amountMajor: 0,
-              })
-            }
-          >
-            <Plus className="size-4" />
-            {t.settleUp.recordPayment}
-          </Button>
+          <div className="flex items-center gap-2">
+            <Button
+              size="sm"
+              variant="outline"
+              onClick={() =>
+                openWith({
+                  fromUserId: currentUserId,
+                  toUserId:
+                    members.find((m) => m.id !== currentUserId)?.id ??
+                    currentUserId,
+                  amountMajor: 0,
+                })
+              }
+            >
+              <Plus className="size-4" />
+              {t.settleUp.recordPayment}
+            </Button>
+            {canFilter && (
+              <ScopeToggle mine={suggestedMine} onChange={setSuggestedMine} />
+            )}
+          </div>
         </div>
 
         {transactions.length === 0 ? (
@@ -213,10 +268,14 @@ export function SettleUp({
               {t.settleUp.nothingToPay}
             </p>
           </Card>
+        ) : visibleTransactions.length === 0 ? (
+          <Card className="p-4 text-sm text-muted-foreground">
+            {t.settleUp.noneInvolvingYou}
+          </Card>
         ) : (
           <Card className="gap-0 p-0">
             <ul className="divide-y">
-              {transactions.map((tx, i) => (
+              {visibleTransactions.map((tx, i) => (
                 <li key={i} className="flex items-center gap-2 px-4 py-3">
                   <div className="flex flex-1 items-center gap-2 text-sm">
                     <span className="font-medium">{nameOf(tx.from)}</span>
@@ -247,26 +306,42 @@ export function SettleUp({
       </section>
 
       {/* Payment history */}
-      {optimistic.length > 0 && (
-        <section className="flex flex-col gap-2">
+      <section className="flex flex-col gap-2">
+        <div className="flex items-center justify-between gap-2">
           <h2 className="text-sm font-semibold text-muted-foreground">
             {t.settleUp.paymentHistory}
           </h2>
+          {canFilter && optimistic.length > 0 && (
+            <ScopeToggle mine={historyMine} onChange={setHistoryMine} />
+          )}
+        </div>
+        {optimistic.length === 0 ? (
+          <Card className="flex flex-col items-center gap-2 p-8 text-center">
+            <History className="size-6 text-muted-foreground" />
+            <p className="text-sm text-muted-foreground">
+              {t.settleUp.noPaymentsYet}
+            </p>
+          </Card>
+        ) : visibleHistory.length === 0 ? (
+          <Card className="p-4 text-sm text-muted-foreground">
+            {t.settleUp.noneInvolvingYou}
+          </Card>
+        ) : (
           <Card className="gap-0 p-0">
             <ul className="divide-y">
-              {optimistic.map((s) => (
+              {visibleHistory.map((s) => (
                 <SettlementItem
                   key={s.id}
                   settlement={s}
                   baseCurrency={baseCurrency}
                   nameOf={nameOf}
-                  onDelete={deletePayment}
+                  onDelete={setToDelete}
                 />
               ))}
             </ul>
           </Card>
-        </section>
-      )}
+        )}
+      </section>
 
       <SettleDialog
         open={open}
@@ -277,6 +352,74 @@ export function SettleUp({
         currentUserId={currentUserId}
         onRecord={recordPayment}
       />
+
+      <Dialog
+        open={toDelete != null}
+        onOpenChange={(o) => {
+          if (!o) setToDelete(null);
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t.settleUp.deleteTitle}</DialogTitle>
+            <DialogDescription>
+              {toDelete
+                ? format(t.settleUp.deleteBody, {
+                    from: nameOf(toDelete.fromUserId),
+                    to: nameOf(toDelete.toUserId),
+                    amount: formatMoney(toDelete.amount, toDelete.currency),
+                  })
+                : null}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button variant="outline" onClick={() => setToDelete(null)}>
+              {t.common.cancel}
+            </Button>
+            <Button
+              variant="destructive"
+              onClick={() => {
+                if (toDelete) deletePayment(toDelete.id);
+                setToDelete(null);
+              }}
+            >
+              {t.settleUp.deletePayment}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+    </div>
+  );
+}
+
+function ScopeToggle({
+  mine,
+  onChange,
+}: {
+  mine: boolean;
+  onChange: (mine: boolean) => void;
+}) {
+  const t = useT();
+  return (
+    <div className="inline-flex gap-0.5 rounded-md bg-muted p-0.5">
+      {[
+        { value: true, label: t.settleUp.filterMine },
+        { value: false, label: t.settleUp.filterEveryone },
+      ].map((opt) => (
+        <button
+          key={opt.label}
+          type="button"
+          onClick={() => onChange(opt.value)}
+          className={cn(
+            "rounded px-2 py-0.5 text-xs font-medium transition-colors",
+            mine === opt.value
+              ? "bg-background shadow-sm"
+              : "text-muted-foreground hover:text-foreground",
+          )}
+        >
+          {opt.label}
+        </button>
+      ))}
     </div>
   );
 }
@@ -290,7 +433,7 @@ function SettlementItem({
   settlement: SettlementRow;
   baseCurrency: string;
   nameOf: (uid: string) => string;
-  onDelete: (id: string) => void;
+  onDelete: (settlement: SettlementRow) => void;
 }) {
   const t = useT();
   const foreign = s.currency !== baseCurrency;
@@ -319,7 +462,7 @@ function SettlementItem({
         ) : null}
       </div>
       <button
-        onClick={() => onDelete(s.id)}
+        onClick={() => onDelete(s)}
         className="rounded-md p-1 text-muted-foreground hover:text-rose-500"
         aria-label={t.settleUp.deletePayment}
       >
@@ -492,30 +635,15 @@ function SettleDialog({
           </div>
 
           {isForeign && (
-            <div className="rounded-lg border bg-muted/30 p-3">
-              <div className="flex items-end gap-3">
-                <div className="flex flex-1 flex-col gap-1.5">
-                  <Label htmlFor="s-fx" className="text-xs">
-                    {format(t.settleUp.rateLabel, { currency, baseCurrency })}
-                  </Label>
-                  <Input
-                    id="s-fx"
-                    type="number"
-                    inputMode="decimal"
-                    step="any"
-                    min="0"
-                    value={fxRate}
-                    onChange={(e) => setFxRate(e.target.value)}
-                  />
-                </div>
-                <p className="pb-2 text-sm text-muted-foreground">
-                  ={" "}
-                  <span className="font-medium text-foreground">
-                    {formatMoney(baseAmount, baseCurrency)}
-                  </span>
-                </p>
-              </div>
-            </div>
+            <FxRateField
+              id="s-fx"
+              currency={currency}
+              baseCurrency={baseCurrency}
+              value={fxRate}
+              onChange={setFxRate}
+              baseAmount={baseAmount}
+              label={format(t.settleUp.rateLabel, { currency, baseCurrency })}
+            />
           )}
 
           <div className="flex flex-col gap-2">

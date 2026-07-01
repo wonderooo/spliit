@@ -12,6 +12,7 @@ import {
   toMajorUnits,
   formatMoney,
   convertMinorUnits,
+  getCurrency,
 } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -33,6 +34,7 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog";
 import { CurrencyPicker } from "@/components/currency-picker";
+import { FxRateField } from "@/components/fx-rate-field";
 import { type ScanResult } from "@/components/receipt-scanner";
 import { useT } from "@/components/i18n-provider";
 import { errorText } from "@/lib/action-result";
@@ -290,36 +292,15 @@ export function ExpenseForm({
           </div>
 
           {isForeign && (
-            <div className="rounded-lg border bg-muted/30 p-3">
-              <div className="flex items-end gap-3">
-                <div className="flex flex-1 flex-col gap-1.5">
-                  <Label htmlFor="fx" className="text-xs">
-                    {format(t.expenseForm.rateLabel, {
-                      currency,
-                      baseCurrency,
-                    })}
-                  </Label>
-                  <Input
-                    id="fx"
-                    type="number"
-                    inputMode="decimal"
-                    step="any"
-                    min="0"
-                    value={fxRate}
-                    onChange={(e) => setFxRate(e.target.value)}
-                  />
-                </div>
-                <p className="pb-2 text-sm text-muted-foreground">
-                  ={" "}
-                  <span className="font-medium text-foreground">
-                    {formatMoney(baseAmount, baseCurrency)}
-                  </span>
-                </p>
-              </div>
-              <p className="mt-1 text-xs text-muted-foreground">
-                {t.expenseForm.rateHelp}
-              </p>
-            </div>
+            <FxRateField
+              id="fx"
+              currency={currency}
+              baseCurrency={baseCurrency}
+              value={fxRate}
+              onChange={setFxRate}
+              baseAmount={baseAmount}
+              label={format(t.expenseForm.rateLabel, { currency, baseCurrency })}
+            />
           )}
 
           <div className="grid grid-cols-2 gap-3">
@@ -416,19 +397,14 @@ export function ExpenseForm({
                           setValues((v) => ({ ...v, [m.id]: e.target.value }))
                         }
                         className="h-8 w-24 text-right"
-                        placeholder={
-                          splitType === "percentage"
-                            ? "%"
-                            : splitType === "shares"
-                              ? t.expenseForm.sharesPlaceholder
-                              : t.expenseForm.amountPlaceholderWord
-                        }
                       />
-                      {splitType === "percentage" && (
-                        <span className="w-3 text-xs text-muted-foreground">
-                          %
-                        </span>
-                      )}
+                      <span className="min-w-8 text-xs text-muted-foreground">
+                        {splitType === "percentage"
+                          ? "%"
+                          : splitType === "shares"
+                            ? "×"
+                            : getCurrency(currency).symbol}
+                      </span>
                     </div>
                   )}
                 </div>

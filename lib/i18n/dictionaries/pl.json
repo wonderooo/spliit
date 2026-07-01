@@ -171,7 +171,9 @@
       "owes": "jest winien",
       "suggestedPayments": "Sugerowane płatności",
       "allSettledTitle": "Wszyscy są rozliczeni",
-      "allSettledBody": "W tej chwili nie są potrzebne żadne płatności."
+      "allSettledBody": "W tej chwili nie są potrzebne żadne płatności.",
+      "settleCtaTitle": "Czas się rozliczyć",
+      "settleCtaBody": "Zobacz kto komu ile i zapisz płatności."
     },
     "invite": {
       "reasonInvalid": "Ten link z zaproszeniem jest nieprawidłowy.",
@@ -272,7 +274,13 @@
     "date": "Data",
     "noteLabel": "Notatka (opcjonalnie)",
     "notePlaceholder": "BLIK, gotówka, …",
-    "saving": "Zapisywanie…"
+    "saving": "Zapisywanie…",
+    "filterEveryone": "Wszyscy",
+    "filterMine": "Tylko ja",
+    "noneInvolvingYou": "Nic z Twoim udziałem.",
+    "noPaymentsYet": "Brak zapisanych płatności.",
+    "deleteTitle": "Usunąć tę płatność?",
+    "deleteBody": "Płatność {from} → {to} ({amount}) zostanie usunięta. Tego nie można cofnąć."
   },
   "membersPanel": {
     "membersCount": "Uczestnicy ({count})",

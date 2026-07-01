@@ -4,8 +4,9 @@ import { getGroup, getGroupMembers, getGroupBalances } from "@/lib/queries";
 import { Card } from "@/components/ui/card";
 import { BalanceAmount } from "@/components/balance-amount";
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ArrowRight, PartyPopper } from "lucide-react";
-import { formatMoney } from "@/lib/currency";
+import { Button } from "@/components/ui/button";
+import { ArrowRight, ArrowLeftRight, PartyPopper } from "lucide-react";
+import Link from "next/link";
 
 export const dynamic = "force-dynamic";
 
@@ -36,12 +37,6 @@ export default async function BalancesPage({
   if (!group) return null;
 
   const cur = group.baseCurrency;
-  const nameOf = (uid: string) =>
-    uid === user.id
-      ? dict.common.you
-      : (members.find((m) => m.id === uid)?.name ??
-        dict.pages.balances.someone);
-
   const allSettled = transactions.length === 0;
 
   return (
@@ -86,41 +81,34 @@ export default async function BalancesPage({
         </Card>
       </section>
 
-      {/* Simplified settle-up plan */}
-      <section className="flex flex-col gap-2">
-        <h2 className="text-sm font-semibold text-muted-foreground">
-          {dict.pages.balances.suggestedPayments}
-        </h2>
-        {allSettled ? (
-          <Card className="flex flex-col items-center gap-2 p-8 text-center">
-            <PartyPopper className="size-6 text-emerald-500" />
+      {/* Settle-up: celebrate when done, otherwise point to the Settle tab */}
+      {allSettled ? (
+        <Card className="flex flex-col items-center gap-2 p-8 text-center">
+          <PartyPopper className="size-6 text-emerald-500" />
+          <p className="font-semibold">{dict.pages.balances.allSettledTitle}</p>
+          <p className="text-sm text-muted-foreground">
+            {dict.pages.balances.allSettledBody}
+          </p>
+        </Card>
+      ) : (
+        <Card className="flex flex-col items-center gap-3 p-8 text-center">
+          <ArrowLeftRight className="size-6 text-muted-foreground" />
+          <div className="flex flex-col gap-1">
             <p className="font-semibold">
-              {dict.pages.balances.allSettledTitle}
+              {dict.pages.balances.settleCtaTitle}
             </p>
             <p className="text-sm text-muted-foreground">
-              {dict.pages.balances.allSettledBody}
+              {dict.pages.balances.settleCtaBody}
             </p>
-          </Card>
-        ) : (
-          <Card className="gap-0 p-0">
-            <ul className="divide-y">
-              {transactions.map((t, i) => (
-                <li
-                  key={i}
-                  className="flex items-center gap-2 px-4 py-3 text-sm"
-                >
-                  <span className="font-medium">{nameOf(t.from)}</span>
-                  <ArrowRight className="size-4 text-muted-foreground" />
-                  <span className="font-medium">{nameOf(t.to)}</span>
-                  <span className="ml-auto font-semibold tabular-nums">
-                    {formatMoney(t.amount, cur)}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </Card>
-        )}
-      </section>
+          </div>
+          <Button asChild>
+            <Link href={`/groups/${id}/settle`}>
+              {dict.nav.settle}
+              <ArrowRight className="size-4" />
+            </Link>
+          </Button>
+        </Card>
+      )}
     </div>
   );
 }
