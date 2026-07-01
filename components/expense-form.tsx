@@ -326,7 +326,7 @@ export function ExpenseForm({
             <div className="flex flex-col gap-2">
               <Label>{t.expenseForm.paidBy}</Label>
               <Select value={paidBy} onValueChange={setPaidBy}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>

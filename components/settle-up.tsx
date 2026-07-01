@@ -441,7 +441,7 @@ function SettleDialog({
             <div className="flex flex-col gap-2">
               <Label>{t.settleUp.from}</Label>
               <Select value={fromUserId} onValueChange={setFromUserId}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
@@ -456,7 +456,7 @@ function SettleDialog({
             <div className="flex flex-col gap-2">
               <Label>{t.settleUp.to}</Label>
               <Select value={toUserId} onValueChange={setToUserId}>
-                <SelectTrigger>
+                <SelectTrigger className="w-full">
                   <SelectValue placeholder={t.settleUp.selectPlaceholder} />
                 </SelectTrigger>
                 <SelectContent>
