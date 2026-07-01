@@ -51,15 +51,47 @@ function DialogContent({
   className,
   children,
   showCloseButton = true,
+  onInteractOutside,
   ...props
 }: React.ComponentProps<typeof DialogPrimitive.Content> & {
   showCloseButton?: boolean
 }) {
+  const contentRef = React.useRef<HTMLDivElement>(null)
+
   return (
     <DialogPortal>
       <DialogOverlay />
       <DialogPrimitive.Content
+        ref={contentRef}
         data-slot="dialog-content"
+        onInteractOutside={(event) => {
+          // A Radix Select/Popover/Dropdown opened inside the dialog renders
+          // its content in a portal and disables outside pointer events while
+          // open. That momentarily makes the dialog content non-interactive, so
+          // a click on empty space *inside* the dialog card lands on the overlay
+          // and reads as an outside interaction — closing the dialog. Keep the
+          // dialog open when the pointer landed within the card's bounds.
+          const original = (event.detail as { originalEvent: Event })
+            .originalEvent
+          const node = contentRef.current
+          if (
+            node &&
+            original &&
+            typeof (original as PointerEvent).clientX === "number"
+          ) {
+            const { clientX, clientY } = original as PointerEvent
+            const rect = node.getBoundingClientRect()
+            if (
+              clientX >= rect.left &&
+              clientX <= rect.right &&
+              clientY >= rect.top &&
+              clientY <= rect.bottom
+            ) {
+              event.preventDefault()
+            }
+          }
+          onInteractOutside?.(event)
+        }}
         className={cn(
           "fixed top-1/2 left-1/2 z-50 grid w-full max-w-[calc(100%-2rem)] -translate-x-1/2 -translate-y-1/2 gap-4 rounded-xl bg-popover p-4 text-sm text-popover-foreground ring-1 ring-foreground/10 duration-100 outline-none sm:max-w-sm data-open:animate-in data-open:fade-in-0 data-open:zoom-in-95 data-closed:animate-out data-closed:fade-out-0 data-closed:zoom-out-95",
           className
