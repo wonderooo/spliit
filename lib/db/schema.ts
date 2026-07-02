@@ -184,6 +184,12 @@ export const expenses = pgTable(
     /** Cached amount converted to the group base currency, minor units. */
     baseAmount: bigint("base_amount", { mode: "number" }).notNull(),
     date: date("date").notNull(),
+    /**
+     * A personal expense the payer spent only on themselves. It's split solely
+     * to the payer, so it nets to zero in the debt graph; it's surfaced
+     * separately as per-person "own spending".
+     */
+    personal: boolean("personal").notNull().default(false),
     /** Receipt breakdown when scanned from a receipt; null for manual expenses. */
     receipt: jsonb("receipt").$type<ReceiptData>(),
     createdBy: text("created_by")

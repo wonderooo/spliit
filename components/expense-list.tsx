@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { MoreVertical, Pencil, Trash2, Receipt } from "lucide-react";
+import { MoreVertical, Pencil, Trash2, Receipt, Wallet } from "lucide-react";
 import type { ExpenseWithSplits } from "@/lib/queries";
 import { formatMoney } from "@/lib/currency";
 import { memberColorStyle } from "@/lib/member-colors";
@@ -113,6 +113,12 @@ export function ExpenseList({
                                                 {t.expenseList.receiptBadge}
                                             </Badge>
                                         ) : null}
+                                        {e.personal ? (
+                                            <Badge className="shrink-0 gap-0.5 border-transparent bg-violet-500/15 py-1 px-1.5 text-violet-700 dark:text-violet-400">
+                                                <Wallet />
+                                                {t.expenseList.personalBadge}
+                                            </Badge>
+                                        ) : null}
                                         {e.category ? (
                                             <Badge
                                                 variant="secondary"
@@ -123,9 +129,10 @@ export function ExpenseList({
                                         ) : null}
                                     </div>
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        {paidByLine(e.paidBy)} · {e.date} ·{" "}
-                                        {SPLIT_LABEL[e.splitType] ??
-                                            e.splitType}
+                                        {paidByLine(e.paidBy)} · {e.date}
+                                        {e.personal
+                                            ? ""
+                                            : ` · ${SPLIT_LABEL[e.splitType] ?? e.splitType}`}
                                     </p>
                                 </div>
                                 <div className="text-right">

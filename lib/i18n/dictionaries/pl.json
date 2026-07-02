@@ -172,6 +172,7 @@
       "settled": "rozliczono",
       "getsBack": "odbiera",
       "owes": "jest winien",
+      "ownSpending": "własne wydatki: {amount}",
       "suggestedPayments": "Sugerowane płatności",
       "allSettledTitle": "Wszyscy są rozliczeni",
       "allSettledBody": "W tej chwili nie są potrzebne żadne płatności.",
@@ -195,6 +196,9 @@
     "splitShares": "Udziały",
     "addExpense": "Dodaj wydatek",
     "editExpense": "Edytuj wydatek",
+    "addPersonal": "Dodaj własny wydatek",
+    "editPersonal": "Edytuj własny wydatek",
+    "personalHint": "Liczy się tylko do Twoich wydatków - nie jest dzielony z nikim.",
     "description": "Zapisz, co zostało zapłacone i jak to podzielić.",
     "descriptionLabel": "Opis",
     "descriptionPlaceholder": "Kolacja, taksówka, zakupy…",
@@ -227,7 +231,8 @@
   "expensesView": {
     "added": "Dodano wydatek",
     "updated": "Zaktualizowano wydatek",
-    "deleted": "Usunięto wydatek"
+    "deleted": "Usunięto wydatek",
+    "addPersonal": "Własny wydatek"
   },
   "expenseList": {
     "splitEqually": "po równo",
@@ -243,7 +248,8 @@
     "deleteTitle": "Usunąć ten wydatek?",
     "deleteBody": "„{description}” ({amount}) zostanie usunięty dla wszystkich. Tej operacji nie można cofnąć.",
     "editItems": "Edytuj pozycje",
-    "receiptBadge": "Paragon"
+    "receiptBadge": "Paragon",
+    "personalBadge": "Własny"
   },
   "createGroup": {
     "created": "Utworzono grupę",

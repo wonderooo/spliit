@@ -172,6 +172,7 @@
       "settled": "settled",
       "getsBack": "gets back",
       "owes": "owes",
+      "ownSpending": "own expenses: {amount}",
       "suggestedPayments": "Suggested payments",
       "allSettledTitle": "Everyone is settled up",
       "allSettledBody": "No payments needed right now.",
@@ -195,6 +196,9 @@
     "splitShares": "Shares",
     "addExpense": "Add expense",
     "editExpense": "Edit expense",
+    "addPersonal": "Add own expense",
+    "editPersonal": "Edit own expense",
+    "personalHint": "Counts only toward your own spending - not split with anyone.",
     "description": "Record what was paid and how to split it.",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "Dinner, taxi, groceries…",
@@ -227,7 +231,8 @@
   "expensesView": {
     "added": "Expense added",
     "updated": "Expense updated",
-    "deleted": "Expense deleted"
+    "deleted": "Expense deleted",
+    "addPersonal": "Own expense"
   },
   "expenseList": {
     "splitEqually": "equally",
@@ -243,7 +248,8 @@
     "deleteTitle": "Delete this expense?",
     "deleteBody": "“{description}” ({amount}) will be removed for everyone. This can't be undone.",
     "editItems": "Edit items",
-    "receiptBadge": "Receipt"
+    "receiptBadge": "Receipt",
+    "personalBadge": "Own"
   },
   "createGroup": {
     "created": "Group created",

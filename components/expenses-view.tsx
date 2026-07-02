@@ -14,6 +14,8 @@ import { toMinorUnits, convertMinorUnits } from "@/lib/currency";
 import { ExpenseForm } from "@/components/expense-form";
 import { ReceiptScanner, type ScanResult } from "@/components/receipt-scanner";
 import { ExpenseList } from "@/components/expense-list";
+import { Button } from "@/components/ui/button";
+import { Wallet } from "lucide-react";
 import { useT } from "@/components/i18n-provider";
 import { errorText } from "@/lib/action-result";
 
@@ -43,6 +45,7 @@ export function ExpensesView({
   const [editing, setEditing] = useState<ExpenseWithSplits | null>(null);
   const [editingReceipt, setEditingReceipt] =
     useState<ExpenseWithSplits | null>(null);
+  const [personalOpen, setPersonalOpen] = useState(false);
   const [scanSeed, setScanSeed] = useState<ScanResult | null>(null);
 
   // Open the prefilled form only after the scanner dialog has fully closed.
@@ -102,6 +105,7 @@ export function ExpensesView({
       baseAmount,
       date: input.date,
       createdAt: new Date(),
+      personal: input.personal ?? false,
       receipt: input.receipt ?? null,
       splits: [],
     };
@@ -168,6 +172,7 @@ export function ExpensesView({
         userId: s.userId,
         value: s.valueMajor,
       })),
+      personal: false,
       receipt: result.receipt,
     };
     submitEdit(target, input);
@@ -202,7 +207,27 @@ export function ExpensesView({
           currentUserId={currentUserId}
           onApply={onScanApplied}
         />
+        <Button
+          variant="outline"
+          className="w-full sm:w-auto"
+          onClick={() => setPersonalOpen(true)}
+        >
+          <Wallet className="size-4" />
+          {t.expensesView.addPersonal}
+        </Button>
       </div>
+      {personalOpen && (
+        <ExpenseForm
+          groupId={groupId}
+          baseCurrency={baseCurrency}
+          members={members}
+          currentUserId={currentUserId}
+          initialPersonal
+          open
+          onOpenChange={setPersonalOpen}
+          onSubmitExpense={submitExpense}
+        />
+      )}
       {scanSeed && (
         <ExpenseForm
           groupId={groupId}

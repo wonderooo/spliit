@@ -65,6 +65,7 @@ export function ExpenseForm({
   onSubmitExpense,
   expense,
   initialScan,
+  initialPersonal,
   open: controlledOpen,
   onOpenChange,
 }: {
@@ -79,6 +80,8 @@ export function ExpenseForm({
   expense?: ExpenseWithSplits;
   /** Pre-fills a new expense from a scanned receipt (create mode only). */
   initialScan?: ScanResult;
+  /** Creates a personal expense (just for the payer); no split editor. */
+  initialPersonal?: boolean;
   /** Controlled open state (used for edit; create mode manages its own). */
   open?: boolean;
   onOpenChange?: (open: boolean) => void;
@@ -87,6 +90,8 @@ export function ExpenseForm({
   const SPLIT_LABELS = splitLabels(t);
   const isEdit = expense != null;
   const isControlled = controlledOpen !== undefined;
+  // A personal expense skips the split editor: it's spent only on the payer.
+  const personal = isEdit ? (expense?.personal ?? false) : (initialPersonal ?? false);
 
   const [internalOpen, setInternalOpen] = useState(false);
   const open = isControlled ? controlledOpen! : internalOpen;
@@ -203,16 +208,19 @@ export function ExpenseForm({
 
   async function onSubmit(e: React.FormEvent) {
     e.preventDefault();
-    if (!splitState.valid) {
+    if (!personal && !splitState.valid) {
       toast.error(splitState.message);
       return;
     }
 
-    const splits = participants.map((m) => {
-      if (splitType === "equal") return { userId: m.id };
-      const raw = Number(values[m.id]) || 0;
-      return { userId: m.id, value: raw };
-    });
+    // A personal expense is split entirely back to its payer (nets to zero).
+    const splits = personal
+      ? [{ userId: paidBy }]
+      : participants.map((m) => {
+          if (splitType === "equal") return { userId: m.id };
+          const raw = Number(values[m.id]) || 0;
+          return { userId: m.id, value: raw };
+        });
 
     const input: CreateExpenseInput = {
       groupId,
@@ -222,9 +230,10 @@ export function ExpenseForm({
       currency,
       paidBy,
       date,
-      splitType,
+      splitType: personal ? "equal" : splitType,
       fxRate: Number(fxRate) || 1,
       splits,
+      personal,
       // Carry the scanned breakdown so a new receipt expense is reopenable.
       ...(scan ? { receipt: scan.receipt } : {}),
     };
@@ -262,7 +271,13 @@ export function ExpenseForm({
       <DialogContent className="max-h-[92svh] gap-4 overflow-y-auto sm:max-w-lg">
         <DialogHeader>
           <DialogTitle>
-            {isEdit ? t.expenseForm.editExpense : t.expenseForm.addExpense}
+            {personal
+              ? isEdit
+                ? t.expenseForm.editPersonal
+                : t.expenseForm.addPersonal
+              : isEdit
+                ? t.expenseForm.editExpense
+                : t.expenseForm.addExpense}
           </DialogTitle>
           <DialogDescription>{t.expenseForm.description}</DialogDescription>
         </DialogHeader>
@@ -342,7 +357,15 @@ export function ExpenseForm({
             </div>
           </div>
 
+          {personal && (
+            <p className="rounded-lg bg-muted/50 px-3 py-2 text-xs text-muted-foreground">
+              {t.expenseForm.personalHint}
+            </p>
+          )}
+
           {/* Split type selector */}
+          {!personal && (
+          <>
           <div className="flex flex-col gap-2">
             <Label>{t.expenseForm.split}</Label>
             <div className="grid grid-cols-4 gap-1 rounded-lg bg-muted p-1">
@@ -433,6 +456,8 @@ export function ExpenseForm({
           >
             {splitState.message}
           </p>
+          </>
+          )}
 
           <DialogFooter>
             <Button
@@ -443,7 +468,9 @@ export function ExpenseForm({
                 ? t.expenseForm.saving
                 : isEdit
                   ? t.expenseForm.saveChanges
-                  : t.expenseForm.addExpense}
+                  : personal
+                    ? t.expenseForm.addPersonal
+                    : t.expenseForm.addExpense}
             </Button>
           </DialogFooter>
         </form>

@@ -82,6 +82,7 @@ export async function createExpense(input: unknown): Promise<ActionResult> {
       fxRate: String(data.fxRate),
       baseAmount,
       date: data.date,
+      personal: data.personal,
       receipt: data.receipt ?? null,
       createdBy: session.user.id,
     }),
@@ -172,6 +173,7 @@ export async function updateExpense(
         fxRate: String(data.fxRate),
         baseAmount,
         date: data.date,
+        personal: data.personal,
         // Only the receipt editor sends `receipt`; a manual edit omits it and
         // leaves any existing breakdown intact.
         ...(data.receipt !== undefined ? { receipt: data.receipt } : {}),

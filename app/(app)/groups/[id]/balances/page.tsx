@@ -8,6 +8,8 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeftRight, PartyPopper } from "lucide-react";
 import Link from "next/link";
 import { memberColorStyle, memberAvatarStyle } from "@/lib/member-colors";
+import { formatMoney } from "@/lib/currency";
+import { format } from "@/lib/i18n/config";
 
 export const dynamic = "force-dynamic";
 
@@ -30,11 +32,12 @@ export default async function BalancesPage({
   const user = await requireUser();
   const dict = await getDictionary();
 
-  const [group, members, { net, transactions }] = await Promise.all([
-    getGroup(id),
-    getGroupMembers(id),
-    getGroupBalances(id),
-  ]);
+  const [group, members, { net, transactions, personalSpending }] =
+    await Promise.all([
+      getGroup(id),
+      getGroupMembers(id),
+      getGroupBalances(id),
+    ]);
   if (!group) return null;
 
   const cur = group.baseCurrency;
@@ -50,9 +53,15 @@ export default async function BalancesPage({
         <Card className="gap-0 p-0">
           <ul className="divide-y">
             {members
-              .filter((m) => !m.removed || (net.get(m.id) ?? 0) !== 0)
+              .filter(
+                (m) =>
+                  !m.removed ||
+                  (net.get(m.id) ?? 0) !== 0 ||
+                  (personalSpending.get(m.id) ?? 0) !== 0,
+              )
               .map((m) => {
               const bal = net.get(m.id) ?? 0;
+              const spent = personalSpending.get(m.id) ?? 0;
               const displayName =
                 m.id === user.id
                   ? dict.common.you
@@ -73,12 +82,21 @@ export default async function BalancesPage({
                       {initials(m.name)}
                     </AvatarFallback>
                   </Avatar>
-                  <span
-                    className="flex-1 truncate text-sm font-medium"
-                    style={memberColorStyle(m.removed ? null : m.color)}
-                  >
-                    {displayName}
-                  </span>
+                  <div className="min-w-0 flex-1">
+                    <span
+                      className="block truncate text-sm font-medium"
+                      style={memberColorStyle(m.removed ? null : m.color)}
+                    >
+                      {displayName}
+                    </span>
+                    {spent > 0 ? (
+                      <span className="block text-xs text-muted-foreground">
+                        {format(dict.pages.balances.ownSpending, {
+                          amount: formatMoney(spent, cur),
+                        })}
+                      </span>
+                    ) : null}
+                  </div>
                   <div className="text-right">
                     <BalanceAmount minor={bal} currency={cur} showSign />
                     <p className="text-xs text-muted-foreground">

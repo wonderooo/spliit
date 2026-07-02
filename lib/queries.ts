@@ -98,6 +98,7 @@ export type ExpenseWithSplits = {
   baseAmount: number;
   date: string;
   createdAt: Date;
+  personal: boolean;
   receipt: ReceiptData | null;
   splits: { userId: string; amount: number; shareValue: string | null }[];
 };
@@ -204,6 +205,8 @@ export async function getGroupSettlements(groupId: string) {
 export type GroupBalances = {
   net: Map<string, number>;
   transactions: ReturnType<typeof simplifyDebts>;
+  /** Base-currency total each user spent on their own personal expenses. */
+  personalSpending: Map<string, number>;
 };
 
 /** Compute net balances + simplified settle-up plan for a group. */
@@ -227,7 +230,18 @@ export async function getGroupBalances(
     baseAmount: s.baseAmount,
   }));
 
+  // Personal expenses net to zero (split back to the payer), so they leave the
+  // debt graph untouched; we tally them per payer for the "own spending" line.
+  const personalSpending = new Map<string, number>();
+  for (const e of exp) {
+    if (!e.personal) continue;
+    personalSpending.set(
+      e.paidBy,
+      (personalSpending.get(e.paidBy) ?? 0) + e.baseAmount,
+    );
+  }
+
   const net = computeNetBalances(balanceExpenses, balanceSettlements);
   const transactions = simplifyDebts(net);
-  return { net, transactions };
+  return { net, transactions, personalSpending };
 }

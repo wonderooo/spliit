@@ -88,6 +88,8 @@ export const createExpenseSchema = z
     splits: z.array(splitEntrySchema).min(1, "pickOnePerson"),
     /** Present when created/edited from a receipt scan. */
     receipt: receiptSchema.optional(),
+    /** A personal expense counted only toward the payer's own spending. */
+    personal: z.boolean().default(false),
   })
   .refine((v) => v.splits.length > 0, { message: "pickOnePerson" });
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
