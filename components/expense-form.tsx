@@ -213,9 +213,12 @@ export function ExpenseForm({
       return;
     }
 
+    // A personal expense always belongs to the current user; no payer picker.
+    const payer = personal ? currentUserId : paidBy;
+
     // A personal expense is split entirely back to its payer (nets to zero).
     const splits = personal
-      ? [{ userId: paidBy }]
+      ? [{ userId: payer }]
       : participants.map((m) => {
           if (splitType === "equal") return { userId: m.id };
           const raw = Number(values[m.id]) || 0;
@@ -228,7 +231,7 @@ export function ExpenseForm({
       category: "",
       amount: amountNum,
       currency,
-      paidBy,
+      paidBy: payer,
       date,
       splitType: personal ? "equal" : splitType,
       fxRate: Number(fxRate) || 1,
@@ -279,7 +282,11 @@ export function ExpenseForm({
                 ? t.expenseForm.editExpense
                 : t.expenseForm.addExpense}
           </DialogTitle>
-          <DialogDescription>{t.expenseForm.description}</DialogDescription>
+          <DialogDescription>
+            {personal
+              ? t.expenseForm.personalDescription
+              : t.expenseForm.description}
+          </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={onSubmit} className="flex flex-col gap-4">
@@ -291,7 +298,6 @@ export function ExpenseForm({
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t.expenseForm.descriptionPlaceholder}
               required
-              autoFocus
             />
           </div>
 
@@ -328,23 +334,31 @@ export function ExpenseForm({
             />
           )}
 
-          <div className="grid grid-cols-2 gap-3">
-            <div className="flex flex-col gap-2">
-              <Label>{t.expenseForm.paidBy}</Label>
-              <Select value={paidBy} onValueChange={setPaidBy}>
-                <SelectTrigger className="w-full">
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {formMembers.map((m) => (
-                    <SelectItem key={m.id} value={m.id}>
-                      {m.id === currentUserId ? t.common.you : m.name}
-                      {m.removed ? ` ${t.common.removedSuffix}` : ""}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
+          <div
+            className={cn(
+              "grid gap-3",
+              personal ? "grid-cols-1" : "grid-cols-2",
+            )}
+          >
+            {!personal && (
+              <div className="flex flex-col gap-2">
+                <Label>{t.expenseForm.paidBy}</Label>
+                <Select value={paidBy} onValueChange={setPaidBy}>
+                  <SelectTrigger className="w-full">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {formMembers.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        <span className={m.removed ? "line-through" : undefined}>
+                          {m.id === currentUserId ? t.common.you : m.name}
+                        </span>
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
             <div className="flex flex-col gap-2">
               <Label htmlFor="date">{t.expenseForm.date}</Label>
               <Input
@@ -409,9 +423,13 @@ export function ExpenseForm({
                       name: m.name,
                     })}
                   />
-                  <span className="flex-1 truncate text-sm">
+                  <span
+                    className={cn(
+                      "flex-1 truncate text-sm",
+                      m.removed && "line-through",
+                    )}
+                  >
                     {m.id === currentUserId ? t.common.you : m.name}
-                    {m.removed ? ` ${t.common.removedSuffix}` : ""}
                   </span>
 
                   {isSel && splitType === "equal" && (

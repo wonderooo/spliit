@@ -141,13 +141,16 @@ export function SettleUp({
     if (uid === currentUserId) return t.common.you;
     const m = members.find((m) => m.id === uid);
     if (!m) return t.settleUp.someone;
-    return m.removed ? `${m.name} ${t.common.removedSuffix}` : m.name;
+    return m.name;
   };
   // Removed members render without their accent color (neutral text).
   const colorOf = (uid: string) => {
     const m = members.find((m) => m.id === uid);
     return m && !m.removed ? m.color : null;
   };
+  // Removed members read as inactive via a strikethrough on their name.
+  const removedOf = (uid: string) =>
+    members.find((m) => m.id === uid)?.removed ?? false;
 
   // Each list has its own "just me" filter. Only worth offering with 3+
   // members, since with two everyone is always involved in every payment.
@@ -290,14 +293,20 @@ export function SettleUp({
                 <li key={i} className="flex items-center gap-2 px-4 py-3">
                   <div className="flex flex-1 items-center gap-2 text-sm">
                     <span
-                      className="font-medium"
+                      className={cn(
+                        "font-medium",
+                        removedOf(tx.from) && "line-through",
+                      )}
                       style={memberColorStyle(colorOf(tx.from))}
                     >
                       {nameOf(tx.from)}
                     </span>
                     <ArrowRight className="size-4 text-muted-foreground" />
                     <span
-                      className="font-medium"
+                      className={cn(
+                        "font-medium",
+                        removedOf(tx.to) && "line-through",
+                      )}
                       style={memberColorStyle(colorOf(tx.to))}
                     >
                       {nameOf(tx.to)}
@@ -357,6 +366,7 @@ export function SettleUp({
                   baseCurrency={baseCurrency}
                   nameOf={nameOf}
                   colorOf={colorOf}
+                  removedOf={removedOf}
                   onDelete={setToDelete}
                 />
               ))}
@@ -451,12 +461,14 @@ function SettlementItem({
   baseCurrency,
   nameOf,
   colorOf,
+  removedOf,
   onDelete,
 }: {
   settlement: SettlementRow;
   baseCurrency: string;
   nameOf: (uid: string) => string;
   colorOf: (uid: string) => string | null;
+  removedOf: (uid: string) => boolean;
   onDelete: (settlement: SettlementRow) => void;
 }) {
   const t = useT();
@@ -467,14 +479,20 @@ function SettlementItem({
       <div className="flex flex-1 flex-col">
         <div className="flex items-center gap-2 text-sm">
           <span
-            className="font-medium"
+            className={cn(
+              "font-medium",
+              removedOf(s.fromUserId) && "line-through",
+            )}
             style={memberColorStyle(colorOf(s.fromUserId))}
           >
             {nameOf(s.fromUserId)}
           </span>
           <ArrowRight className="size-3.5 text-muted-foreground" />
           <span
-            className="font-medium"
+            className={cn(
+              "font-medium",
+              removedOf(s.toUserId) && "line-through",
+            )}
             style={memberColorStyle(colorOf(s.toUserId))}
           >
             {nameOf(s.toUserId)}
@@ -624,8 +642,9 @@ function SettleDialog({
                 <SelectContent>
                   {members.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
-                      {m.id === currentUserId ? t.common.you : m.name}
-                      {m.removed ? ` ${t.common.removedSuffix}` : ""}
+                      <span className={m.removed ? "line-through" : undefined}>
+                        {m.id === currentUserId ? t.common.you : m.name}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -640,8 +659,9 @@ function SettleDialog({
                 <SelectContent>
                   {members.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
-                      {m.id === currentUserId ? t.common.you : m.name}
-                      {m.removed ? ` ${t.common.removedSuffix}` : ""}
+                      <span className={m.removed ? "line-through" : undefined}>
+                        {m.id === currentUserId ? t.common.you : m.name}
+                      </span>
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -121,11 +121,20 @@ export async function updateExpense(
   if (!group) return fail("groupNotFound");
 
   const existing = await db
-    .select({ id: expenses.id })
+    .select({
+      id: expenses.id,
+      personal: expenses.personal,
+      paidBy: expenses.paidBy,
+    })
     .from(expenses)
     .where(and(eq(expenses.id, expenseId), eq(expenses.groupId, data.groupId)))
     .limit(1);
   if (existing.length === 0) return fail("expenseNotFound");
+
+  // A personal ("own") expense can only be changed by the person it belongs to.
+  if (existing[0].personal && existing[0].paidBy !== session.user.id) {
+    return fail("notExpenseOwner");
+  }
 
   const members = await getGroupMembers(data.groupId);
   const memberIds = new Set(members.map((m) => m.id));
@@ -204,6 +213,18 @@ export async function deleteExpense(
 
   const membership = await getMembership(groupId, session.user.id);
   if (!membership) return fail("notAMember");
+
+  const existing = await db
+    .select({ personal: expenses.personal, paidBy: expenses.paidBy })
+    .from(expenses)
+    .where(and(eq(expenses.id, expenseId), eq(expenses.groupId, groupId)))
+    .limit(1);
+  if (existing.length === 0) return fail("expenseNotFound");
+
+  // A personal ("own") expense can only be deleted by the person it belongs to.
+  if (existing[0].personal && existing[0].paidBy !== session.user.id) {
+    return fail("notExpenseOwner");
+  }
 
   await db.delete(expenses).where(eq(expenses.id, expenseId));
 

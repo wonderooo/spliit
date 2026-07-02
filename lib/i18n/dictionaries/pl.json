@@ -12,8 +12,7 @@
     "loading": "Ładowanie…",
     "language": "Język",
     "toggleTheme": "Przełącz motyw",
-    "signOut": "Wyloguj się",
-    "removedSuffix": "(usunięty)"
+    "signOut": "Wyloguj się"
   },
   "nav": {
     "expenses": "Wydatki",
@@ -146,7 +145,8 @@
     "assignItemToSomeone": "Przypisz co najmniej jedną pozycję do kogoś.",
     "pickRecipient": "Wybierz, kto otrzymał płatność.",
     "notGroupOwner": "Tylko właściciel grupy może usuwać uczestników.",
-    "cannotRemoveSelf": "Nie możesz usunąć samego siebie."
+    "cannotRemoveSelf": "Nie możesz usunąć samego siebie.",
+    "notExpenseOwner": "Tylko osoba, do której należy ten własny wydatek, może go zmienić."
   },
   "pages": {
     "dashboard": {
@@ -200,6 +200,7 @@
     "editPersonal": "Edytuj własny wydatek",
     "personalHint": "Liczy się tylko do Twoich wydatków - nie jest dzielony z nikim.",
     "description": "Zapisz, co zostało zapłacone i jak to podzielić.",
+    "personalDescription": "Zapisz coś, co wydałeś tylko na siebie.",
     "descriptionLabel": "Opis",
     "descriptionPlaceholder": "Kolacja, taksówka, zakupy…",
     "defaultDescription": "Paragon",

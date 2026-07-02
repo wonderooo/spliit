@@ -10,6 +10,7 @@ import Link from "next/link";
 import { memberColorStyle, memberAvatarStyle } from "@/lib/member-colors";
 import { formatMoney } from "@/lib/currency";
 import { format } from "@/lib/i18n/config";
+import { cn } from "@/lib/utils";
 
 export const dynamic = "force-dynamic";
 
@@ -62,12 +63,7 @@ export default async function BalancesPage({
               .map((m) => {
               const bal = net.get(m.id) ?? 0;
               const spent = personalSpending.get(m.id) ?? 0;
-              const displayName =
-                m.id === user.id
-                  ? dict.common.you
-                  : m.removed
-                    ? `${m.name} ${dict.common.removedSuffix}`
-                    : m.name;
+              const displayName = m.id === user.id ? dict.common.you : m.name;
               return (
                 <li
                   key={m.id}
@@ -84,7 +80,10 @@ export default async function BalancesPage({
                   </Avatar>
                   <div className="min-w-0 flex-1">
                     <span
-                      className="block truncate text-sm font-medium"
+                      className={cn(
+                        "block truncate text-sm font-medium",
+                        m.removed && "line-through",
+                      )}
                       style={memberColorStyle(m.removed ? null : m.color)}
                     >
                       {displayName}

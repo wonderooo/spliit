@@ -12,8 +12,7 @@
     "loading": "Loading…",
     "language": "Language",
     "toggleTheme": "Toggle theme",
-    "signOut": "Sign out",
-    "removedSuffix": "(removed)"
+    "signOut": "Sign out"
   },
   "nav": {
     "expenses": "Expenses",
@@ -146,7 +145,8 @@
     "assignItemToSomeone": "Assign at least one item to someone.",
     "pickRecipient": "Pick who received the payment.",
     "notGroupOwner": "Only the group owner can remove members.",
-    "cannotRemoveSelf": "You can't remove yourself."
+    "cannotRemoveSelf": "You can't remove yourself.",
+    "notExpenseOwner": "Only the person this own expense belongs to can change it."
   },
   "pages": {
     "dashboard": {
@@ -200,6 +200,7 @@
     "editPersonal": "Edit own expense",
     "personalHint": "Counts only toward your own spending - not split with anyone.",
     "description": "Record what was paid and how to split it.",
+    "personalDescription": "Record something you spent just on yourself.",
     "descriptionLabel": "Description",
     "descriptionPlaceholder": "Dinner, taxi, groceries…",
     "defaultDescription": "Receipt",

@@ -68,17 +68,13 @@ export function ExpensesView({
     },
   );
 
-  // Removed members keep appearing in expenses: mark the name and drop the
-  // accent color so they read as inactive.
-  const names = Object.fromEntries(
-    members.map((m) => [
-      m.id,
-      m.removed ? `${m.name} ${t.common.removedSuffix}` : m.name,
-    ]),
-  );
+  // Removed members keep appearing in expenses: strike through the name and
+  // drop the accent color so they read as inactive.
+  const names = Object.fromEntries(members.map((m) => [m.id, m.name]));
   const colors = Object.fromEntries(
     members.map((m) => [m.id, m.removed ? null : m.color]),
   );
+  const removed = Object.fromEntries(members.map((m) => [m.id, m.removed]));
 
   function buildOptimistic(input: CreateExpenseInput): ExpenseWithSplits {
     let amountMinor = 0;
@@ -193,14 +189,16 @@ export function ExpensesView({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2 sm:flex-row">
-        <ExpenseForm
-          groupId={groupId}
-          baseCurrency={baseCurrency}
-          members={members}
-          currentUserId={currentUserId}
-          onSubmitExpense={submitExpense}
-        />
+      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row">
+        <div className="col-span-2 sm:col-span-1">
+          <ExpenseForm
+            groupId={groupId}
+            baseCurrency={baseCurrency}
+            members={members}
+            currentUserId={currentUserId}
+            onSubmitExpense={submitExpense}
+          />
+        </div>
         <ReceiptScanner
           currency={baseCurrency}
           members={members}
@@ -247,6 +245,7 @@ export function ExpensesView({
         expenses={optimistic}
         names={names}
         colors={colors}
+        removed={removed}
         currentUserId={currentUserId}
         onDelete={onDelete}
         onEdit={setEditing}

@@ -25,6 +25,7 @@ import {
 import { useT } from "@/components/i18n-provider";
 import { format } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionary";
+import { cn } from "@/lib/utils";
 
 function splitLabel(t: Dictionary): Record<string, string> {
     return {
@@ -40,6 +41,7 @@ export function ExpenseList({
     expenses,
     names,
     colors,
+    removed,
     currentUserId,
     onDelete,
     onEdit,
@@ -49,6 +51,7 @@ export function ExpenseList({
     expenses: ExpenseWithSplits[];
     names: Record<string, string>;
     colors: Record<string, string | null>;
+    removed: Record<string, boolean>;
     currentUserId: string;
     onDelete: (id: string) => void;
     onEdit: (expense: ExpenseWithSplits) => void;
@@ -64,17 +67,24 @@ export function ExpenseList({
             : (names[id] ?? t.expenseList.someone);
     }
 
-    /** The "{name} paid" line with just the payer name in their accent color. */
+    /** The "{name} paid" line with just the payer name in their accent color.
+     *  Removed members read as inactive via a strikethrough on their name. */
     function paidByLine(id: string) {
         const label = format(t.expenseList.paidBy, { name: nameOf(id) });
         const name = nameOf(id);
         const style = memberColorStyle(colors[id]);
+        const isRemoved = removed[id];
         const at = label.indexOf(name);
-        if (at < 0 || !style) return label;
+        if (at < 0 || (!style && !isRemoved)) return label;
         return (
             <>
                 {label.slice(0, at)}
-                <span style={style}>{name}</span>
+                <span
+                    style={style}
+                    className={cn(isRemoved && "line-through")}
+                >
+                    {name}
+                </span>
                 {label.slice(at + name.length)}
             </>
         );
@@ -99,6 +109,9 @@ export function ExpenseList({
             <ul className="flex flex-col gap-2">
                 {expenses.map((e) => {
                     const foreign = e.currency !== baseCurrency;
+                    // A personal ("own") expense can only be edited or deleted
+                    // by the person it belongs to.
+                    const canModify = !e.personal || e.paidBy === currentUserId;
                     return (
                         <li key={e.id}>
                             <Card className="flex-row items-center gap-3 p-3.5">
@@ -129,7 +142,10 @@ export function ExpenseList({
                                         ) : null}
                                     </div>
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        {paidByLine(e.paidBy)} · {e.date}
+                                        {paidByLine(e.paidBy)} ·{" "}
+                                        <span className="whitespace-nowrap">
+                                            {e.date}
+                                        </span>
                                         {e.personal
                                             ? ""
                                             : ` · ${SPLIT_LABEL[e.splitType] ?? e.splitType}`}
@@ -148,37 +164,41 @@ export function ExpenseList({
                                         </p>
                                     ) : null}
                                 </div>
-                                <DropdownMenu>
-                                    <DropdownMenuTrigger
-                                        className="rounded-md p-1 text-muted-foreground hover:text-foreground"
-                                        aria-label={t.expenseList.actions}
-                                    >
-                                        <MoreVertical className="size-4" />
-                                    </DropdownMenuTrigger>
-                                    <DropdownMenuContent align="end">
-                                        <DropdownMenuItem
-                                            onClick={() => onEdit(e)}
+                                {canModify ? (
+                                    <DropdownMenu>
+                                        <DropdownMenuTrigger
+                                            className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+                                            aria-label={t.expenseList.actions}
                                         >
-                                            <Pencil className="size-4" />
-                                            {t.expenseList.edit}
-                                        </DropdownMenuItem>
-                                        {e.receipt ? (
+                                            <MoreVertical className="size-4" />
+                                        </DropdownMenuTrigger>
+                                        <DropdownMenuContent align="end">
                                             <DropdownMenuItem
-                                                onClick={() => onEditReceipt(e)}
+                                                onClick={() => onEdit(e)}
                                             >
-                                                <Receipt className="size-4" />
-                                                {t.expenseList.editItems}
+                                                <Pencil className="size-4" />
+                                                {t.expenseList.edit}
                                             </DropdownMenuItem>
-                                        ) : null}
-                                        <DropdownMenuItem
-                                            variant="destructive"
-                                            onClick={() => setToDelete(e)}
-                                        >
-                                            <Trash2 className="size-4" />
-                                            {t.expenseList.delete}
-                                        </DropdownMenuItem>
-                                    </DropdownMenuContent>
-                                </DropdownMenu>
+                                            {e.receipt ? (
+                                                <DropdownMenuItem
+                                                    onClick={() =>
+                                                        onEditReceipt(e)
+                                                    }
+                                                >
+                                                    <Receipt className="size-4" />
+                                                    {t.expenseList.editItems}
+                                                </DropdownMenuItem>
+                                            ) : null}
+                                            <DropdownMenuItem
+                                                variant="destructive"
+                                                onClick={() => setToDelete(e)}
+                                            >
+                                                <Trash2 className="size-4" />
+                                                {t.expenseList.delete}
+                                            </DropdownMenuItem>
+                                        </DropdownMenuContent>
+                                    </DropdownMenu>
+                                ) : null}
                             </Card>
                         </li>
                     );
