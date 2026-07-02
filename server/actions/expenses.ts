@@ -82,6 +82,7 @@ export async function createExpense(input: unknown): Promise<ActionResult> {
       fxRate: String(data.fxRate),
       baseAmount,
       date: data.date,
+      receipt: data.receipt ?? null,
       createdBy: session.user.id,
     }),
     db.insert(expenseSplits).values(
@@ -171,6 +172,9 @@ export async function updateExpense(
         fxRate: String(data.fxRate),
         baseAmount,
         date: data.date,
+        // Only the receipt editor sends `receipt`; a manual edit omits it and
+        // leaves any existing breakdown intact.
+        ...(data.receipt !== undefined ? { receipt: data.receipt } : {}),
       })
       .where(eq(expenses.id, expenseId)),
     db.delete(expenseSplits).where(eq(expenseSplits.expenseId, expenseId)),

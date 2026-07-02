@@ -160,19 +160,12 @@ export function ExpenseForm({
     };
   }, [currency, baseCurrency, date, isForeign]);
 
-  // Show active members plus any removed member already part of this expense
-  // (when editing) so their split isn't silently dropped. New expenses only
-  // offer active members.
-  const relevantIds = useMemo(() => {
-    const s = new Set<string>();
-    if (expense) {
-      s.add(expense.paidBy);
-      expense.splits.forEach((x) => s.add(x.userId));
-    }
-    return s;
-  }, [expense]);
-  const formMembers = members.filter(
-    (m) => !m.removed || relevantIds.has(m.id),
+  // Show every member so removed people can still be picked (e.g. a payer or
+  // participant in a back-dated expense, or one already on the expense being
+  // edited). Removed members sort last and stay unchecked by default.
+  const formMembers = useMemo(
+    () => [...members].sort((a, b) => Number(a.removed) - Number(b.removed)),
+    [members],
   );
 
   const participants = members.filter((m) => selected.has(m.id));
@@ -203,7 +196,7 @@ export function ExpenseForm({
     setPaidBy(currentUserId);
     setDate(todayISO());
     setSplitType("equal");
-    setSelected(new Set(formMembers.map((m) => m.id)));
+    setSelected(new Set(members.filter((m) => !m.removed).map((m) => m.id)));
     setValues({});
     setFxRate("1");
   }
@@ -232,6 +225,8 @@ export function ExpenseForm({
       splitType,
       fxRate: Number(fxRate) || 1,
       splits,
+      // Carry the scanned breakdown so a new receipt expense is reopenable.
+      ...(scan ? { receipt: scan.receipt } : {}),
     };
 
     // Close instantly — the parent shows the expense optimistically.

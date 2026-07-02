@@ -241,7 +241,9 @@
     "edit": "Edit",
     "delete": "Delete",
     "deleteTitle": "Delete this expense?",
-    "deleteBody": "“{description}” ({amount}) will be removed for everyone. This can't be undone."
+    "deleteBody": "“{description}” ({amount}) will be removed for everyone. This can't be undone.",
+    "editItems": "Edit items",
+    "receiptBadge": "Receipt"
   },
   "createGroup": {
     "created": "Group created",
@@ -336,7 +338,7 @@
     "appliedAsExactSplit": "Receipt applied as an exact split",
     "scanReceipt": "Scan receipt",
     "dialogTitle": "Scan a receipt",
-    "dialogDescription": "Snap the receipt - items and currency are read automatically. Tap who shared each one, then apply as an exact split.",
+    "dialogDescription": "Snap the receipt and tap who shared each item.",
     "takePhoto": "Take or choose a photo",
     "photoHint": "A flat, well-lit photo reads best.",
     "scanningHint": "Usually a few seconds. Hang tight.",
@@ -349,7 +351,10 @@
     "tip": "Tip",
     "total": "Total",
     "rescan": "Rescan",
-    "applyExactSplit": "Apply exact split"
+    "applyExactSplit": "Apply exact split",
+    "editTitle": "Edit receipt items",
+    "editDescription": "Adjust items, who shared each one, tax and tip. Saving updates the expense as an exact split.",
+    "saveChanges": "Save changes"
   },
   "currencyPicker": {
     "selectCurrency": "Select currency",

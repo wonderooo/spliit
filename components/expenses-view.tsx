@@ -41,6 +41,8 @@ export function ExpensesView({
   const router = useRouter();
   const [, startTransition] = useTransition();
   const [editing, setEditing] = useState<ExpenseWithSplits | null>(null);
+  const [editingReceipt, setEditingReceipt] =
+    useState<ExpenseWithSplits | null>(null);
   const [scanSeed, setScanSeed] = useState<ScanResult | null>(null);
 
   // Open the prefilled form only after the scanner dialog has fully closed.
@@ -100,6 +102,7 @@ export function ExpensesView({
       baseAmount,
       date: input.date,
       createdAt: new Date(),
+      receipt: input.receipt ?? null,
       splits: [],
     };
   }
@@ -130,6 +133,9 @@ export function ExpensesView({
             ...buildOptimistic(input),
             id: target.id,
             createdAt: target.createdAt,
+            // A manual edit omits `receipt`; keep the existing breakdown so the
+            // receipt marker doesn't flicker off before the refresh lands.
+            receipt: input.receipt ?? target.receipt,
           },
         });
         const res = await updateExpense(target.id, input);
@@ -143,6 +149,28 @@ export function ExpensesView({
         }
       });
     });
+  }
+
+  // Reopening the receipt editor edits items/tax/tip only; description, payer,
+  // date and fx rate stay as they were and the split becomes exact again.
+  function applyReceiptEdit(target: ExpenseWithSplits, result: ScanResult) {
+    const input: CreateExpenseInput = {
+      groupId,
+      description: target.description,
+      category: target.category ?? "",
+      amount: result.totalMajor,
+      currency: result.currency,
+      paidBy: target.paidBy,
+      date: target.date,
+      splitType: "exact",
+      fxRate: Number(target.fxRate) || 1,
+      splits: result.splits.map((s) => ({
+        userId: s.userId,
+        value: s.valueMajor,
+      })),
+      receipt: result.receipt,
+    };
+    submitEdit(target, input);
   }
 
   function onDelete(id: string) {
@@ -197,6 +225,7 @@ export function ExpensesView({
         currentUserId={currentUserId}
         onDelete={onDelete}
         onEdit={setEditing}
+        onEditReceipt={setEditingReceipt}
       />
       {editing && (
         <ExpenseForm
@@ -211,6 +240,20 @@ export function ExpensesView({
             if (!o) setEditing(null);
           }}
           onSubmitExpense={(input) => submitEdit(editing, input)}
+        />
+      )}
+      {editingReceipt?.receipt && (
+        <ReceiptScanner
+          key={editingReceipt.id}
+          currency={editingReceipt.currency}
+          members={members}
+          currentUserId={currentUserId}
+          initialReceipt={editingReceipt.receipt}
+          open
+          onOpenChange={(o) => {
+            if (!o) setEditingReceipt(null);
+          }}
+          onApply={(result) => applyReceiptEdit(editingReceipt, result)}
         />
       )}
     </div>

@@ -9,180 +9,215 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
+    DropdownMenu,
+    DropdownMenuContent,
+    DropdownMenuItem,
+    DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
 } from "@/components/ui/dialog";
 import { useT } from "@/components/i18n-provider";
 import { format } from "@/lib/i18n/config";
 import type { Dictionary } from "@/lib/i18n/dictionary";
 
 function splitLabel(t: Dictionary): Record<string, string> {
-  return {
-    equal: t.expenseList.splitEqually,
-    exact: t.expenseList.splitExact,
-    percentage: "%",
-    shares: t.expenseList.splitShares,
-  };
+    return {
+        equal: t.expenseList.splitEqually,
+        exact: t.expenseList.splitExact,
+        percentage: "%",
+        shares: t.expenseList.splitShares,
+    };
 }
 
 export function ExpenseList({
-  baseCurrency,
-  expenses,
-  names,
-  colors,
-  currentUserId,
-  onDelete,
-  onEdit,
+    baseCurrency,
+    expenses,
+    names,
+    colors,
+    currentUserId,
+    onDelete,
+    onEdit,
+    onEditReceipt,
 }: {
-  baseCurrency: string;
-  expenses: ExpenseWithSplits[];
-  names: Record<string, string>;
-  colors: Record<string, string | null>;
-  currentUserId: string;
-  onDelete: (id: string) => void;
-  onEdit: (expense: ExpenseWithSplits) => void;
+    baseCurrency: string;
+    expenses: ExpenseWithSplits[];
+    names: Record<string, string>;
+    colors: Record<string, string | null>;
+    currentUserId: string;
+    onDelete: (id: string) => void;
+    onEdit: (expense: ExpenseWithSplits) => void;
+    onEditReceipt: (expense: ExpenseWithSplits) => void;
 }) {
-  const t = useT();
-  const SPLIT_LABEL = splitLabel(t);
-  const [toDelete, setToDelete] = useState<ExpenseWithSplits | null>(null);
+    const t = useT();
+    const SPLIT_LABEL = splitLabel(t);
+    const [toDelete, setToDelete] = useState<ExpenseWithSplits | null>(null);
 
-  function nameOf(id: string) {
-    return id === currentUserId ? t.common.you : (names[id] ?? t.expenseList.someone);
-  }
+    function nameOf(id: string) {
+        return id === currentUserId
+            ? t.common.you
+            : (names[id] ?? t.expenseList.someone);
+    }
 
-  /** The "{name} paid" line with just the payer name in their accent color. */
-  function paidByLine(id: string) {
-    const label = format(t.expenseList.paidBy, { name: nameOf(id) });
-    const name = nameOf(id);
-    const style = memberColorStyle(colors[id]);
-    const at = label.indexOf(name);
-    if (at < 0 || !style) return label;
-    return (
-      <>
-        {label.slice(0, at)}
-        <span style={style}>{name}</span>
-        {label.slice(at + name.length)}
-      </>
-    );
-  }
-
-  if (expenses.length === 0) {
-    return (
-      <Card className="flex flex-col items-center gap-2 p-10 text-center">
-        <div className="inline-flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
-          <Receipt className="size-6" />
-        </div>
-        <p className="font-semibold">{t.expenseList.emptyTitle}</p>
-        <p className="text-sm text-muted-foreground">
-          {t.expenseList.emptyBody}
-        </p>
-      </Card>
-    );
-  }
-
-  return (
-    <>
-      <ul className="flex flex-col gap-2">
-      {expenses.map((e) => {
-        const foreign = e.currency !== baseCurrency;
+    /** The "{name} paid" line with just the payer name in their accent color. */
+    function paidByLine(id: string) {
+        const label = format(t.expenseList.paidBy, { name: nameOf(id) });
+        const name = nameOf(id);
+        const style = memberColorStyle(colors[id]);
+        const at = label.indexOf(name);
+        if (at < 0 || !style) return label;
         return (
-          <li key={e.id}>
-            <Card className="flex-row items-center gap-3 p-3.5">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <p className="truncate font-medium">{e.description}</p>
-                  {e.category ? (
-                    <Badge variant="secondary" className="shrink-0">
-                      {e.category}
-                    </Badge>
-                  ) : null}
-                </div>
-                <p className="text-xs text-muted-foreground">
-                  {paidByLine(e.paidBy)} · {e.date} ·{" "}
-                  {SPLIT_LABEL[e.splitType] ?? e.splitType}
-                </p>
-              </div>
-              <div className="text-right">
-                <p className="font-semibold tabular-nums">
-                  {formatMoney(e.amount, e.currency)}
-                </p>
-                {foreign ? (
-                  <p className="text-xs text-muted-foreground tabular-nums">
-                    {formatMoney(e.baseAmount, baseCurrency)}
-                  </p>
-                ) : null}
-              </div>
-              <DropdownMenu>
-                <DropdownMenuTrigger
-                  className="rounded-md p-1 text-muted-foreground hover:text-foreground"
-                  aria-label={t.expenseList.actions}
-                >
-                  <MoreVertical className="size-4" />
-                </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onEdit(e)}>
-                    <Pencil className="size-4" />
-                    {t.expenseList.edit}
-                  </DropdownMenuItem>
-                  <DropdownMenuItem
-                    variant="destructive"
-                    onClick={() => setToDelete(e)}
-                  >
-                    <Trash2 className="size-4" />
-                    {t.expenseList.delete}
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </Card>
-          </li>
+            <>
+                {label.slice(0, at)}
+                <span style={style}>{name}</span>
+                {label.slice(at + name.length)}
+            </>
         );
-      })}
-      </ul>
+    }
 
-      <Dialog
-        open={toDelete != null}
-        onOpenChange={(o) => {
-          if (!o) setToDelete(null);
-        }}
-      >
-        <DialogContent className="max-w-sm">
-          <DialogHeader>
-            <DialogTitle>{t.expenseList.deleteTitle}</DialogTitle>
-            <DialogDescription>
-              {toDelete
-                ? format(t.expenseList.deleteBody, {
-                    description: toDelete.description,
-                    amount: formatMoney(toDelete.amount, toDelete.currency),
-                  })
-                : null}
-            </DialogDescription>
-          </DialogHeader>
-          <DialogFooter className="gap-2 sm:gap-2">
-            <Button variant="outline" onClick={() => setToDelete(null)}>
-              {t.common.cancel}
-            </Button>
-            <Button
-              variant="destructive"
-              onClick={() => {
-                if (toDelete) onDelete(toDelete.id);
-                setToDelete(null);
-              }}
+    if (expenses.length === 0) {
+        return (
+            <Card className="flex flex-col items-center gap-2 p-10 text-center">
+                <div className="inline-flex size-12 items-center justify-center rounded-2xl bg-primary/10 text-primary">
+                    <Receipt className="size-6" />
+                </div>
+                <p className="font-semibold">{t.expenseList.emptyTitle}</p>
+                <p className="text-sm text-muted-foreground">
+                    {t.expenseList.emptyBody}
+                </p>
+            </Card>
+        );
+    }
+
+    return (
+        <>
+            <ul className="flex flex-col gap-2">
+                {expenses.map((e) => {
+                    const foreign = e.currency !== baseCurrency;
+                    return (
+                        <li key={e.id}>
+                            <Card className="flex-row items-center gap-3 p-3.5">
+                                <div className="min-w-0 flex-1">
+                                    <div className="flex items-center gap-2">
+                                        <p className="truncate font-medium">
+                                            {e.description}
+                                        </p>
+                                        {e.receipt ? (
+                                            <Badge className="shrink-0 gap-0.5 border-transparent bg-emerald-500/15 py-1 px-1.5 text-emerald-700 dark:text-emerald-400">
+                                                <Receipt />
+                                                {t.expenseList.receiptBadge}
+                                            </Badge>
+                                        ) : null}
+                                        {e.category ? (
+                                            <Badge
+                                                variant="secondary"
+                                                className="shrink-0"
+                                            >
+                                                {e.category}
+                                            </Badge>
+                                        ) : null}
+                                    </div>
+                                    <p className="mt-1 text-xs text-muted-foreground">
+                                        {paidByLine(e.paidBy)} · {e.date} ·{" "}
+                                        {SPLIT_LABEL[e.splitType] ??
+                                            e.splitType}
+                                    </p>
+                                </div>
+                                <div className="text-right">
+                                    <p className="font-semibold tabular-nums">
+                                        {formatMoney(e.amount, e.currency)}
+                                    </p>
+                                    {foreign ? (
+                                        <p className="text-xs text-muted-foreground tabular-nums">
+                                            {formatMoney(
+                                                e.baseAmount,
+                                                baseCurrency,
+                                            )}
+                                        </p>
+                                    ) : null}
+                                </div>
+                                <DropdownMenu>
+                                    <DropdownMenuTrigger
+                                        className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+                                        aria-label={t.expenseList.actions}
+                                    >
+                                        <MoreVertical className="size-4" />
+                                    </DropdownMenuTrigger>
+                                    <DropdownMenuContent align="end">
+                                        <DropdownMenuItem
+                                            onClick={() => onEdit(e)}
+                                        >
+                                            <Pencil className="size-4" />
+                                            {t.expenseList.edit}
+                                        </DropdownMenuItem>
+                                        {e.receipt ? (
+                                            <DropdownMenuItem
+                                                onClick={() => onEditReceipt(e)}
+                                            >
+                                                <Receipt className="size-4" />
+                                                {t.expenseList.editItems}
+                                            </DropdownMenuItem>
+                                        ) : null}
+                                        <DropdownMenuItem
+                                            variant="destructive"
+                                            onClick={() => setToDelete(e)}
+                                        >
+                                            <Trash2 className="size-4" />
+                                            {t.expenseList.delete}
+                                        </DropdownMenuItem>
+                                    </DropdownMenuContent>
+                                </DropdownMenu>
+                            </Card>
+                        </li>
+                    );
+                })}
+            </ul>
+
+            <Dialog
+                open={toDelete != null}
+                onOpenChange={(o) => {
+                    if (!o) setToDelete(null);
+                }}
             >
-              {t.expenseList.delete}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-    </>
-  );
+                <DialogContent className="max-w-sm">
+                    <DialogHeader>
+                        <DialogTitle>{t.expenseList.deleteTitle}</DialogTitle>
+                        <DialogDescription>
+                            {toDelete
+                                ? format(t.expenseList.deleteBody, {
+                                      description: toDelete.description,
+                                      amount: formatMoney(
+                                          toDelete.amount,
+                                          toDelete.currency,
+                                      ),
+                                  })
+                                : null}
+                        </DialogDescription>
+                    </DialogHeader>
+                    <DialogFooter className="gap-2 sm:gap-2">
+                        <Button
+                            variant="outline"
+                            onClick={() => setToDelete(null)}
+                        >
+                            {t.common.cancel}
+                        </Button>
+                        <Button
+                            variant="destructive"
+                            onClick={() => {
+                                if (toDelete) onDelete(toDelete.id);
+                                setToDelete(null);
+                            }}
+                        >
+                            {t.expenseList.delete}
+                        </Button>
+                    </DialogFooter>
+                </DialogContent>
+            </Dialog>
+        </>
+    );
 }

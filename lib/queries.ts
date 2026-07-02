@@ -9,6 +9,7 @@ import {
   settlements,
   invitations,
   user as userTable,
+  type ReceiptData,
 } from "@/lib/db/schema";
 import {
   computeNetBalances,
@@ -97,6 +98,7 @@ export type ExpenseWithSplits = {
   baseAmount: number;
   date: string;
   createdAt: Date;
+  receipt: ReceiptData | null;
   splits: { userId: string; amount: number; shareValue: string | null }[];
 };
 

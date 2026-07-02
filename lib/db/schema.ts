@@ -7,6 +7,7 @@ import {
   numeric,
   uuid,
   date,
+  jsonb,
   unique,
   index,
 } from "drizzle-orm/pg-core";
@@ -81,6 +82,18 @@ export type SplitType = (typeof splitTypes)[number];
 
 export const memberRoles = ["owner", "member"] as const;
 export type MemberRole = (typeof memberRoles)[number];
+
+/**
+ * Breakdown of a receipt-scanned expense, stored verbatim so the receipt item
+ * editor can be reopened. All money is in minor units of `currency`; assignees
+ * are member user ids who shared each item.
+ */
+export type ReceiptData = {
+  currency: string;
+  items: { name: string; price: number; assignees: string[] }[];
+  tax: number | null;
+  tip: number | null;
+};
 
 export const inviteStatuses = ["pending", "accepted", "revoked"] as const;
 export type InviteStatus = (typeof inviteStatuses)[number];
@@ -171,6 +184,8 @@ export const expenses = pgTable(
     /** Cached amount converted to the group base currency, minor units. */
     baseAmount: bigint("base_amount", { mode: "number" }).notNull(),
     date: date("date").notNull(),
+    /** Receipt breakdown when scanned from a receipt; null for manual expenses. */
+    receipt: jsonb("receipt").$type<ReceiptData>(),
     createdBy: text("created_by")
       .notNull()
       .references(() => user.id, { onDelete: "cascade" }),

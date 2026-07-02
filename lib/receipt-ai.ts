@@ -39,9 +39,16 @@ function prompt(fallbackCurrency: string): string {
     "Report prices as plain numbers in major units",
     "(e.g. 12.99 — no currency symbols, no thousands separators).",
     "If a line shows a quantity (e.g. 2x), report the line's total price for that item.",
-    "Separately extract tax, tip/gratuity/service charge, and the grand total when present.",
+    "Extract the grand total when present.",
+    "Only report `tax` and `tip` (tip / gratuity / service charge) as amounts that are",
+    "ADDED ON TOP OF the listed item prices to reach the grand total.",
+    "If tax is already included in the item prices - i.e. VAT-inclusive pricing, common",
+    "outside the US, where the item prices and the grand total already contain the tax -",
+    "report tax as null even when a VAT/tax amount is printed for information only.",
+    "Reliable check: if the listed item prices already add up to the grand total, then",
+    "tax and tip are already included - report both as null.",
     "Do NOT include subtotal, payment lines (cash/card/change), or store metadata as items.",
-    "Use null for tax, tip, or total if they are not shown.",
+    "Use null for tax, tip, or total if they are not shown or already included in the item prices.",
   ].join(" ");
 }
 

@@ -241,7 +241,9 @@
     "edit": "Edytuj",
     "delete": "Usuń",
     "deleteTitle": "Usunąć ten wydatek?",
-    "deleteBody": "„{description}” ({amount}) zostanie usunięty dla wszystkich. Tej operacji nie można cofnąć."
+    "deleteBody": "„{description}” ({amount}) zostanie usunięty dla wszystkich. Tej operacji nie można cofnąć.",
+    "editItems": "Edytuj pozycje",
+    "receiptBadge": "Paragon"
   },
   "createGroup": {
     "created": "Utworzono grupę",
@@ -336,7 +338,7 @@
     "appliedAsExactSplit": "Zastosowano paragon jako podział na dokładne kwoty",
     "scanReceipt": "Zeskanuj paragon",
     "dialogTitle": "Zeskanuj paragon",
-    "dialogDescription": "Zrób zdjęcie paragonu - pozycje i waluta są odczytywane automatycznie. Wskaż, kto dzielił się każdą z nich, a następnie zastosuj jako podział na dokładne kwoty.",
+    "dialogDescription": "Zrób zdjęcie paragonu i wskaż, kto dzielił się każdą pozycją.",
     "takePhoto": "Zrób lub wybierz zdjęcie",
     "photoHint": "Najlepiej czyta się płaskie, dobrze oświetlone zdjęcie.",
     "scanningHint": "Zwykle kilka sekund. Chwila cierpliwości.",
@@ -349,7 +351,10 @@
     "tip": "Napiwek",
     "total": "Suma",
     "rescan": "Zeskanuj ponownie",
-    "applyExactSplit": "Zastosuj podział na dokładne kwoty"
+    "applyExactSplit": "Zastosuj podział na dokładne kwoty",
+    "editTitle": "Edytuj pozycje paragonu",
+    "editDescription": "Zmień pozycje, kto je współdzielił, podatek i napiwek. Zapis zaktualizuje wydatek jako podział na dokładne kwoty.",
+    "saveChanges": "Zapisz zmiany"
   },
   "currencyPicker": {
     "selectCurrency": "Wybierz walutę",

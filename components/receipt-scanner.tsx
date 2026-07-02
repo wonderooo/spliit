@@ -12,6 +12,7 @@ import {
   isKnownCurrency,
 } from "@/lib/currency";
 import { distribute } from "@/lib/splits";
+import type { ReceiptData } from "@/lib/db/schema";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -35,6 +36,8 @@ export type ScanResult = {
   totalMajor: number;
   currency: string;
   splits: { userId: string; valueMajor: number }[];
+  /** Full breakdown, persisted so the item editor can be reopened. */
+  receipt: ReceiptData;
 };
 
 type ScannedReceipt = {
@@ -84,15 +87,27 @@ export function ReceiptScanner({
   currency,
   members,
   onApply,
+  initialReceipt,
+  open: controlledOpen,
+  onOpenChange: controlledOnOpenChange,
 }: {
   currency: string;
   members: MemberUser[];
   currentUserId: string;
   onApply: (result: ScanResult) => void;
+  /** When set, the dialog opens straight into review, seeded from a saved
+   *  receipt breakdown (editing an existing receipt expense). */
+  initialReceipt?: ReceiptData;
+  /** Controlled open state (edit mode); create mode manages its own. */
+  open?: boolean;
+  onOpenChange?: (v: boolean) => void;
 }) {
   const t = useT();
   const SCAN_STAGES = scanStages(t);
-  const [open, setOpen] = useState(false);
+  const isControlled = controlledOpen !== undefined;
+  const isEdit = initialReceipt != null;
+  const [internalOpen, setInternalOpen] = useState(false);
+  const open = isControlled ? controlledOpen! : internalOpen;
   const [status, setStatus] = useState<"idle" | "scanning" | "review">("idle");
   const [stage, setStage] = useState(0);
   const [rows, setRows] = useState<Row[]>([]);
@@ -114,6 +129,28 @@ export function ReceiptScanner({
     return () => clearInterval(id);
   }, [status]);
 
+  // Edit mode: seed the review UI from the saved breakdown each time it opens.
+  useEffect(() => {
+    if (!open || !initialReceipt) return;
+    const cur = initialReceipt.currency;
+    const decimals = currencyDecimals(cur);
+    const major = (minor: number) => toMajorUnits(minor, cur).toFixed(decimals);
+    setScanCurrency(cur);
+    setDetected(false);
+    setMerchant(null);
+    setRows(
+      initialReceipt.items.map((it) => ({
+        id: nextId(),
+        name: it.name,
+        price: major(it.price),
+        assignees: new Set(it.assignees),
+      })),
+    );
+    setTax(initialReceipt.tax ? major(initialReceipt.tax) : "");
+    setTip(initialReceipt.tip ? major(initialReceipt.tip) : "");
+    setStatus("review");
+  }, [open, initialReceipt]);
+
   function reset() {
     setStatus("idle");
     setStage(0);
@@ -126,7 +163,8 @@ export function ReceiptScanner({
   }
 
   function onOpenChange(v: boolean) {
-    setOpen(v);
+    if (isControlled) controlledOnOpenChange?.(v);
+    else setInternalOpen(v);
     if (!v) reset();
   }
 
@@ -166,8 +204,37 @@ export function ReceiptScanner({
           assignees: new Set(allMemberIds),
         })),
       );
-      setTax(data.tax ? data.tax.toFixed(decimals) : "");
-      setTip(data.tip ? data.tip.toFixed(decimals) : "");
+
+      // Guard against double-counting tax that is already included in the item
+      // prices (VAT-inclusive receipts, the norm in Europe). We add tax + tip on
+      // top of the items, so if the items (plus any tip) already reach the printed
+      // grand total, the tax line is informational and adding it would overshoot -
+      // drop it. Only fires when doing so overshoots the total, so a missed item
+      // (which leaves us under the total) never triggers it.
+      const toM = (n: number) => {
+        try {
+          return toMinorUnits(n.toFixed(decimals), useCurrency);
+        } catch {
+          return 0;
+        }
+      };
+      let taxNum = data.tax ?? 0;
+      const tipNum = data.tip ?? 0;
+      if (data.total != null && taxNum > 0) {
+        const itemsMinor = data.items.reduce((a, it) => a + toM(it.price), 0);
+        const tipMinor = toM(tipNum);
+        const taxMinor = toM(taxNum);
+        const totalMinor = toM(data.total);
+        const tol = 1; // one minor unit of rounding slack
+        if (
+          itemsMinor + tipMinor <= totalMinor + tol &&
+          itemsMinor + tipMinor + taxMinor > totalMinor + tol
+        ) {
+          taxNum = 0;
+        }
+      }
+      setTax(taxNum ? taxNum.toFixed(decimals) : "");
+      setTip(tipNum ? tipNum.toFixed(decimals) : "");
       setStatus("review");
       if (data.items.length === 0) {
         toast.info(t.receipt.noItemsDetected);
@@ -267,11 +334,27 @@ export function ReceiptScanner({
       return;
     }
 
+    // Persist every priced or named line (even unassigned ones) so nothing is
+    // lost when the editor is reopened; the total still comes from the splits.
+    const receipt: ReceiptData = {
+      currency: scanCurrency,
+      items: rows
+        .map((r) => ({
+          name: r.name.trim(),
+          price: toMinor(r.price),
+          assignees: [...r.assignees],
+        }))
+        .filter((it) => it.price > 0 || it.name.length > 0),
+      tax: toMinor(tax) || null,
+      tip: toMinor(tip) || null,
+    };
+
     onApply({
       merchant,
       totalMajor: toMajorUnits(totalMinor, scanCurrency),
       currency: scanCurrency,
       splits,
+      receipt,
     });
     toast.success(t.receipt.appliedAsExactSplit);
     onOpenChange(false);
@@ -290,16 +373,22 @@ export function ReceiptScanner({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogTrigger asChild>
-        <Button type="button" variant="outline" className="w-full sm:w-auto">
-          <ScanLine className="size-4" />
-          {t.receipt.scanReceipt}
-        </Button>
-      </DialogTrigger>
+      {!isControlled && (
+        <DialogTrigger asChild>
+          <Button type="button" variant="outline" className="w-full sm:w-auto">
+            <ScanLine className="size-4" />
+            {t.receipt.scanReceipt}
+          </Button>
+        </DialogTrigger>
+      )}
       <DialogContent className="max-h-[92svh] gap-4 overflow-y-auto sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle>{t.receipt.dialogTitle}</DialogTitle>
-          <DialogDescription>{t.receipt.dialogDescription}</DialogDescription>
+          <DialogTitle>
+            {isEdit ? t.receipt.editTitle : t.receipt.dialogTitle}
+          </DialogTitle>
+          <DialogDescription>
+            {isEdit ? t.receipt.editDescription : t.receipt.dialogDescription}
+          </DialogDescription>
         </DialogHeader>
 
         <input
@@ -519,7 +608,7 @@ export function ReceiptScanner({
                 {t.receipt.rescan}
               </Button>
               <Button type="button" onClick={apply} disabled={totalMinor <= 0}>
-                {t.receipt.applyExactSplit}
+                {isEdit ? t.receipt.saveChanges : t.receipt.applyExactSplit}
               </Button>
             </DialogFooter>
           </div>

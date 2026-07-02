@@ -56,6 +56,22 @@ const splitEntrySchema = z.object({
   value: z.number().finite().optional(),
 });
 
+/** Receipt breakdown persisted so the item editor can be reopened. Money is in
+ *  minor units of `currency`. Omitted on manual expenses; on update, absence
+ *  leaves any existing breakdown untouched. */
+export const receiptSchema = z.object({
+  currency: currencySchema,
+  items: z.array(
+    z.object({
+      name: z.string().trim().max(140),
+      price: z.number().int().nonnegative(),
+      assignees: z.array(z.string().min(1)),
+    }),
+  ),
+  tax: z.number().int().nonnegative().nullable(),
+  tip: z.number().int().nonnegative().nullable(),
+});
+
 export const createExpenseSchema = z
   .object({
     groupId: z.uuid(),
@@ -70,6 +86,8 @@ export const createExpenseSchema = z
     /** Exchange rate currency -> group base currency. */
     fxRate: z.number().positive(),
     splits: z.array(splitEntrySchema).min(1, "pickOnePerson"),
+    /** Present when created/edited from a receipt scan. */
+    receipt: receiptSchema.optional(),
   })
   .refine((v) => v.splits.length > 0, { message: "pickOnePerson" });
 export type CreateExpenseInput = z.infer<typeof createExpenseSchema>;
