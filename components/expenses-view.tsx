@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useOptimistic, useTransition } from "react";
+import { useState, useMemo, useOptimistic, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -14,8 +14,14 @@ import { toMinorUnits, convertMinorUnits } from "@/lib/currency";
 import { ExpenseForm } from "@/components/expense-form";
 import { ReceiptScanner, type ScanResult } from "@/components/receipt-scanner";
 import { ExpenseList } from "@/components/expense-list";
+import {
+  ExpenseFilters,
+  type SortOption,
+  type FilterType,
+} from "@/components/expense-filters";
 import { Button } from "@/components/ui/button";
-import { Wallet } from "lucide-react";
+import { Card } from "@/components/ui/card";
+import { Wallet, ScanLine } from "lucide-react";
 import { useT } from "@/components/i18n-provider";
 import { errorText } from "@/lib/action-result";
 
@@ -46,7 +52,16 @@ export function ExpensesView({
   const [editingReceipt, setEditingReceipt] =
     useState<ExpenseWithSplits | null>(null);
   const [personalOpen, setPersonalOpen] = useState(false);
+  const [scanOpen, setScanOpen] = useState(false);
   const [scanSeed, setScanSeed] = useState<ScanResult | null>(null);
+  const [sort, setSort] = useState<SortOption>("date-desc");
+  const [filterType, setFilterType] = useState<FilterType>("all");
+  const [filterPayer, setFilterPayer] = useState("all");
+
+  function clearFilters() {
+    setFilterType("all");
+    setFilterPayer("all");
+  }
 
   // Open the prefilled form only after the scanner dialog has fully closed.
   // Two modal dialogs open at once corrupt Radix's shared pointer-events lock:
@@ -75,6 +90,42 @@ export function ExpensesView({
     members.map((m) => [m.id, m.removed ? null : m.color]),
   );
   const removed = Object.fromEntries(members.map((m) => [m.id, m.removed]));
+
+  // Only offer payers who actually appear in the list, so the filter never
+  // shows a dead option.
+  const payers = useMemo(() => {
+    const ids = new Set(optimistic.map((e) => e.paidBy));
+    return members.filter((m) => ids.has(m.id));
+  }, [optimistic, members]);
+
+  const visibleExpenses = useMemo(() => {
+    let list = optimistic;
+    if (filterType === "shared") list = list.filter((e) => !e.personal);
+    else if (filterType === "personal") list = list.filter((e) => e.personal);
+    if (filterPayer !== "all")
+      list = list.filter((e) => e.paidBy === filterPayer);
+
+    // baseAmount lets amount sorting compare across currencies; the date sort
+    // falls back to createdAt so same-day expenses keep a stable order.
+    return [...list].sort((a, b) => {
+      switch (sort) {
+        case "date-asc":
+          return (
+            a.date.localeCompare(b.date) ||
+            a.createdAt.getTime() - b.createdAt.getTime()
+          );
+        case "date-desc":
+          return (
+            b.date.localeCompare(a.date) ||
+            b.createdAt.getTime() - a.createdAt.getTime()
+          );
+        case "amount-asc":
+          return a.baseAmount - b.baseAmount;
+        case "amount-desc":
+          return b.baseAmount - a.baseAmount;
+      }
+    });
+  }, [optimistic, sort, filterType, filterPayer]);
 
   function buildOptimistic(input: CreateExpenseInput): ExpenseWithSplits {
     let amountMinor = 0;
@@ -189,8 +240,11 @@ export function ExpensesView({
 
   return (
     <div className="flex flex-col gap-4">
-      <div className="grid grid-cols-2 gap-2 sm:flex sm:flex-row">
-        <div className="col-span-2 sm:col-span-1">
+      {/* One wrap-aware toolbar. Mobile: row 1 = scan + own (50/50), row 2 =
+          the primary "add" (majority) + sort/filter (compact). Desktop: a
+          single row with the add actions left and sort/filter pushed right. */}
+      <div className="flex flex-wrap items-center gap-2 sm:flex-nowrap">
+        <div className="order-2 flex-1 sm:order-1 sm:flex-none">
           <ExpenseForm
             groupId={groupId}
             baseCurrency={baseCurrency}
@@ -199,21 +253,45 @@ export function ExpensesView({
             onSubmitExpense={submitExpense}
           />
         </div>
-        <ReceiptScanner
-          currency={baseCurrency}
-          members={members}
-          currentUserId={currentUserId}
-          onApply={onScanApplied}
-        />
         <Button
           variant="outline"
-          className="w-full sm:w-auto"
+          className="order-1 min-w-0 flex-1 basis-[calc(50%-0.25rem)] sm:order-2 sm:flex-none sm:basis-auto"
+          onClick={() => setScanOpen(true)}
+        >
+          <ScanLine className="size-4 shrink-0" />
+          <span className="truncate">{t.receipt.scanReceipt}</span>
+        </Button>
+        <Button
+          variant="outline"
+          className="order-1 min-w-0 flex-1 basis-[calc(50%-0.25rem)] sm:order-3 sm:flex-none sm:basis-auto"
           onClick={() => setPersonalOpen(true)}
         >
-          <Wallet className="size-4" />
-          {t.expensesView.addPersonal}
+          <Wallet className="size-4 shrink-0" />
+          <span className="truncate">{t.expensesView.addPersonal}</span>
         </Button>
+        {optimistic.length > 0 && (
+          <div className="order-3 sm:order-4 sm:ml-auto">
+            <ExpenseFilters
+              sort={sort}
+              onSortChange={setSort}
+              filterType={filterType}
+              onFilterTypeChange={setFilterType}
+              filterPayer={filterPayer}
+              onFilterPayerChange={setFilterPayer}
+              payers={payers}
+              currentUserId={currentUserId}
+            />
+          </div>
+        )}
       </div>
+      <ReceiptScanner
+        currency={baseCurrency}
+        members={members}
+        currentUserId={currentUserId}
+        open={scanOpen}
+        onOpenChange={setScanOpen}
+        onApply={onScanApplied}
+      />
       {personalOpen && (
         <ExpenseForm
           groupId={groupId}
@@ -240,17 +318,31 @@ export function ExpensesView({
           onSubmitExpense={submitExpense}
         />
       )}
-      <ExpenseList
-        baseCurrency={baseCurrency}
-        expenses={optimistic}
-        names={names}
-        colors={colors}
-        removed={removed}
-        currentUserId={currentUserId}
-        onDelete={onDelete}
-        onEdit={setEditing}
-        onEditReceipt={setEditingReceipt}
-      />
+      {optimistic.length > 0 && visibleExpenses.length === 0 ? (
+        <Card className="flex flex-col items-center gap-3 p-10 text-center">
+          <div>
+            <p className="font-semibold">{t.expenseFilters.noMatches}</p>
+            <p className="text-sm text-muted-foreground">
+              {t.expenseFilters.noMatchesBody}
+            </p>
+          </div>
+          <Button variant="outline" size="sm" onClick={clearFilters}>
+            {t.expenseFilters.clearFilters}
+          </Button>
+        </Card>
+      ) : (
+        <ExpenseList
+          baseCurrency={baseCurrency}
+          expenses={visibleExpenses}
+          names={names}
+          colors={colors}
+          removed={removed}
+          currentUserId={currentUserId}
+          onDelete={onDelete}
+          onEdit={setEditing}
+          onEditReceipt={setEditingReceipt}
+        />
+      )}
       {editing && (
         <ExpenseForm
           key={editing.id}

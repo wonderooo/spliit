@@ -252,6 +252,23 @@
     "receiptBadge": "Paragon",
     "personalBadge": "Własny"
   },
+  "expenseFilters": {
+    "sortLabel": "Sortuj",
+    "sortNewest": "Najnowsze",
+    "sortOldest": "Najstarsze",
+    "sortAmountDesc": "Najdroższe",
+    "sortAmountAsc": "Najtańsze",
+    "filterLabel": "Filtruj",
+    "typeLabel": "Typ",
+    "typeAll": "Wszystkie",
+    "typeShared": "Wspólne",
+    "typeOwn": "Własne",
+    "payerLabel": "Zapłacił(a)",
+    "payerAll": "Wszyscy",
+    "noMatches": "Brak pasujących wydatków",
+    "noMatchesBody": "Żaden wydatek nie pasuje do wybranych filtrów.",
+    "clearFilters": "Wyczyść filtry"
+  },
   "createGroup": {
     "created": "Utworzono grupę",
     "nameLabel": "Nazwa grupy",

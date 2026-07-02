@@ -252,6 +252,23 @@
     "receiptBadge": "Receipt",
     "personalBadge": "Own"
   },
+  "expenseFilters": {
+    "sortLabel": "Sort",
+    "sortNewest": "Newest first",
+    "sortOldest": "Oldest first",
+    "sortAmountDesc": "Most expensive",
+    "sortAmountAsc": "Cheapest",
+    "filterLabel": "Filter",
+    "typeLabel": "Type",
+    "typeAll": "All",
+    "typeShared": "Shared",
+    "typeOwn": "Own",
+    "payerLabel": "Paid by",
+    "payerAll": "Everyone",
+    "noMatches": "No matching expenses",
+    "noMatchesBody": "No expenses match the current filters.",
+    "clearFilters": "Clear filters"
+  },
   "createGroup": {
     "created": "Group created",
     "nameLabel": "Group name",
