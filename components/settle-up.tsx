@@ -241,14 +241,15 @@ export function SettleUp({
     <div className="flex flex-col gap-5">
       {/* Suggested payments */}
       <section className="flex flex-col gap-2">
-        <div className="flex flex-wrap items-center justify-between gap-2">
+        <div className="flex flex-wrap items-center gap-2">
           <h2 className="text-sm font-semibold text-muted-foreground">
             {t.settleUp.suggestedPayments}
           </h2>
-          <div className="flex items-center gap-2">
+          <div className="ml-auto flex items-center gap-2">
             <Button
               size="sm"
               variant="outline"
+              aria-label={t.settleUp.recordPayment}
               onClick={() =>
                 openWith({
                   fromUserId: currentUserId,
@@ -260,7 +261,9 @@ export function SettleUp({
               }
             >
               <Plus className="size-4" />
-              {t.settleUp.recordPayment}
+              <span className="hidden sm:inline">
+                {t.settleUp.recordPayment}
+              </span>
             </Button>
             {canFilter && (
               <ScopeToggle mine={suggestedMine} onChange={setSuggestedMine} />
