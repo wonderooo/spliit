@@ -7,6 +7,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, ArrowLeftRight, PartyPopper } from "lucide-react";
 import Link from "next/link";
+import { memberColorStyle, memberAvatarStyle } from "@/lib/member-colors";
 
 export const dynamic = "force-dynamic";
 
@@ -48,8 +49,16 @@ export default async function BalancesPage({
         </h2>
         <Card className="gap-0 p-0">
           <ul className="divide-y">
-            {members.map((m) => {
+            {members
+              .filter((m) => !m.removed || (net.get(m.id) ?? 0) !== 0)
+              .map((m) => {
               const bal = net.get(m.id) ?? 0;
+              const displayName =
+                m.id === user.id
+                  ? dict.common.you
+                  : m.removed
+                    ? `${m.name} ${dict.common.removedSuffix}`
+                    : m.name;
               return (
                 <li
                   key={m.id}
@@ -57,12 +66,18 @@ export default async function BalancesPage({
                 >
                   <Avatar className="size-8">
                     {m.image ? <AvatarImage src={m.image} alt={m.name} /> : null}
-                    <AvatarFallback className="text-xs">
+                    <AvatarFallback
+                      className="text-xs"
+                      style={memberAvatarStyle(m.removed ? null : m.color)}
+                    >
                       {initials(m.name)}
                     </AvatarFallback>
                   </Avatar>
-                  <span className="flex-1 truncate text-sm">
-                    {m.id === user.id ? dict.common.you : m.name}
+                  <span
+                    className="flex-1 truncate text-sm font-medium"
+                    style={memberColorStyle(m.removed ? null : m.color)}
+                  >
+                    {displayName}
                   </span>
                   <div className="text-right">
                     <BalanceAmount minor={bal} currency={cur} showSign />

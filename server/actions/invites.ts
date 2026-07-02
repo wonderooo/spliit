@@ -6,7 +6,12 @@ import { db } from "@/lib/db";
 import { invitations, groupMembers } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { getMembership } from "@/lib/queries";
-import { inviteSchema, memberNameSchema } from "@/lib/validators";
+import {
+  inviteSchema,
+  memberNameSchema,
+  memberColorSchema,
+} from "@/lib/validators";
+import { pickMemberColor } from "@/lib/member-colors";
 import {
   ok,
   fail,
@@ -48,6 +53,7 @@ export async function createInvite(
 export async function acceptInvite(
   token: string,
   name?: string,
+  color?: string,
 ): Promise<ActionResult<{ groupId: string; alreadyMember: boolean }>> {
   const session = await getSession();
   if (!session?.user) return fail("notSignedIn");
@@ -61,6 +67,9 @@ export async function acceptInvite(
     }
     memberName = parsedName.data;
   }
+
+  // The accent color is optional too; a valid choice wins, else auto-assign.
+  const chosenColor = memberColorSchema.safeParse(color);
 
   const rows = await db
     .select()
@@ -89,17 +98,47 @@ export async function acceptInvite(
   }
 
   const existing = await getMembership(invite.groupId, session.user.id);
-  if (existing) {
-    // Already in the group — a no-op. Don't consume the link or claim a join.
+  if (existing && !existing.removedAt) {
+    // Already an active member — a no-op. Don't consume the link or claim a join.
     return ok({ groupId: invite.groupId, alreadyMember: true });
   }
 
-  await db.insert(groupMembers).values({
-    groupId: invite.groupId,
-    userId: session.user.id,
-    name: memberName,
-    role: "member",
-  });
+  // Prefer the member's pick; otherwise auto-assign a color not already used
+  // by someone else in the group.
+  const takenRows = await db
+    .select({ color: groupMembers.color })
+    .from(groupMembers)
+    .where(eq(groupMembers.groupId, invite.groupId));
+  const taken = takenRows.map((r) => r.color).filter((c): c is string => !!c);
+
+  if (existing) {
+    // Previously removed: reactivate the same row (the (group, user) pair is
+    // unique, so we can't insert a second one). Keep their old name/color
+    // unless a new choice was made.
+    await db
+      .update(groupMembers)
+      .set({
+        removedAt: null,
+        ...(memberName !== null ? { name: memberName } : {}),
+        color: chosenColor.success
+          ? chosenColor.data
+          : (existing.color ?? pickMemberColor(taken)),
+      })
+      .where(
+        and(
+          eq(groupMembers.groupId, invite.groupId),
+          eq(groupMembers.userId, session.user.id),
+        ),
+      );
+  } else {
+    await db.insert(groupMembers).values({
+      groupId: invite.groupId,
+      userId: session.user.id,
+      name: memberName,
+      color: chosenColor.success ? chosenColor.data : pickMemberColor(taken),
+      role: "member",
+    });
+  }
 
   // Targeted invites are single-use; open links stay reusable.
   if (invite.email) {

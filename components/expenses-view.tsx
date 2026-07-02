@@ -63,7 +63,17 @@ export function ExpensesView({
     },
   );
 
-  const names = Object.fromEntries(members.map((m) => [m.id, m.name]));
+  // Removed members keep appearing in expenses: mark the name and drop the
+  // accent color so they read as inactive.
+  const names = Object.fromEntries(
+    members.map((m) => [
+      m.id,
+      m.removed ? `${m.name} ${t.common.removedSuffix}` : m.name,
+    ]),
+  );
+  const colors = Object.fromEntries(
+    members.map((m) => [m.id, m.removed ? null : m.color]),
+  );
 
   function buildOptimistic(input: CreateExpenseInput): ExpenseWithSplits {
     let amountMinor = 0;
@@ -183,6 +193,7 @@ export function ExpensesView({
         baseCurrency={baseCurrency}
         expenses={optimistic}
         names={names}
+        colors={colors}
         currentUserId={currentUserId}
         onDelete={onDelete}
         onEdit={setEditing}

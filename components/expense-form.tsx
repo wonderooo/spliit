@@ -120,7 +120,7 @@ export function ExpenseForm({
       ? new Set(expense.splits.map((s) => s.userId))
       : scan
         ? new Set(scan.splits.map((s) => s.userId))
-        : new Set(members.map((m) => m.id)),
+        : new Set(members.filter((m) => !m.removed).map((m) => m.id)),
   );
   const [values, setValues] = useState<Record<string, string>>(
     expense
@@ -160,6 +160,21 @@ export function ExpenseForm({
     };
   }, [currency, baseCurrency, date, isForeign]);
 
+  // Show active members plus any removed member already part of this expense
+  // (when editing) so their split isn't silently dropped. New expenses only
+  // offer active members.
+  const relevantIds = useMemo(() => {
+    const s = new Set<string>();
+    if (expense) {
+      s.add(expense.paidBy);
+      expense.splits.forEach((x) => s.add(x.userId));
+    }
+    return s;
+  }, [expense]);
+  const formMembers = members.filter(
+    (m) => !m.removed || relevantIds.has(m.id),
+  );
+
   const participants = members.filter((m) => selected.has(m.id));
 
   // Live validation of the split.
@@ -188,7 +203,7 @@ export function ExpenseForm({
     setPaidBy(currentUserId);
     setDate(todayISO());
     setSplitType("equal");
-    setSelected(new Set(members.map((m) => m.id)));
+    setSelected(new Set(formMembers.map((m) => m.id)));
     setValues({});
     setFxRate("1");
   }
@@ -311,9 +326,10 @@ export function ExpenseForm({
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  {members.map((m) => (
+                  {formMembers.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       {m.id === currentUserId ? t.common.you : m.name}
+                      {m.removed ? ` ${t.common.removedSuffix}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -355,7 +371,7 @@ export function ExpenseForm({
 
           {/* Participants / split editor */}
           <div className="flex flex-col gap-1.5">
-            {members.map((m) => {
+            {formMembers.map((m) => {
               const isSel = selected.has(m.id);
               const share = splitState.shares[m.id];
               return (
@@ -377,6 +393,7 @@ export function ExpenseForm({
                   />
                   <span className="flex-1 truncate text-sm">
                     {m.id === currentUserId ? t.common.you : m.name}
+                    {m.removed ? ` ${t.common.removedSuffix}` : ""}
                   </span>
 
                   {isSel && splitType === "equal" && (

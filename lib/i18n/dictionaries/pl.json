@@ -12,7 +12,8 @@
     "loading": "Ładowanie…",
     "language": "Język",
     "toggleTheme": "Przełącz motyw",
-    "signOut": "Wyloguj się"
+    "signOut": "Wyloguj się",
+    "removedSuffix": "(usunięty)"
   },
   "nav": {
     "expenses": "Wydatki",
@@ -143,7 +144,9 @@
     "unknownSplitType": "Nieznany typ podziału.",
     "couldNotStartSignIn": "Nie udało się rozpocząć logowania. Spróbuj ponownie.",
     "assignItemToSomeone": "Przypisz co najmniej jedną pozycję do kogoś.",
-    "pickRecipient": "Wybierz, kto otrzymał płatność."
+    "pickRecipient": "Wybierz, kto otrzymał płatność.",
+    "notGroupOwner": "Tylko właściciel grupy może usuwać uczestników.",
+    "cannotRemoveSelf": "Nie możesz usunąć samego siebie."
   },
   "pages": {
     "dashboard": {
@@ -286,8 +289,16 @@
     "membersCount": "Uczestnicy ({count})",
     "pendingInvites": "Oczekujące zaproszenia",
     "nameUpdated": "Zaktualizowano nazwę",
+    "colorUpdated": "Zaktualizowano kolor",
+    "yourColor": "Twój kolor",
     "youSuffix": "(Ty)",
     "owner": "Właściciel",
+    "removedBadge": "Usunięty",
+    "memberRemoved": "Usunięto uczestnika",
+    "removeMemberAria": "Usuń {name}",
+    "removeTitle": "Usunąć tego uczestnika?",
+    "removeBody": "{name} straci dostęp do grupy, ale jego wydatki, salda i płatności zostają. Tego nie można cofnąć.",
+    "remove": "Usuń",
     "editYourName": "Edytuj swoją nazwę",
     "inviteLinkCopied": "Skopiowano link z zaproszeniem",
     "inviteRevoked": "Cofnięto zaproszenie",
@@ -311,6 +322,7 @@
     "nameLabel": "Twoja nazwa w tej grupie",
     "namePlaceholder": "np. Alex",
     "nameHelp": "Tak będziesz widoczny dla grupy. Możesz to później zmienić.",
+    "colorLabel": "Twój kolor",
     "joining": "Dołączanie…",
     "joinGroup": "Dołącz do grupy"
   },

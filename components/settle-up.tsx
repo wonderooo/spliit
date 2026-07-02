@@ -39,6 +39,7 @@ import { useT } from "@/components/i18n-provider";
 import { errorText } from "@/lib/action-result";
 import { format } from "@/lib/i18n/config";
 import { cn } from "@/lib/utils";
+import { memberColorStyle } from "@/lib/member-colors";
 
 type SettlementRow = {
   id: string;
@@ -136,10 +137,17 @@ export function SettleUp({
     },
   );
 
-  const nameOf = (uid: string) =>
-    uid === currentUserId
-      ? t.common.you
-      : (members.find((m) => m.id === uid)?.name ?? t.settleUp.someone);
+  const nameOf = (uid: string) => {
+    if (uid === currentUserId) return t.common.you;
+    const m = members.find((m) => m.id === uid);
+    if (!m) return t.settleUp.someone;
+    return m.removed ? `${m.name} ${t.common.removedSuffix}` : m.name;
+  };
+  // Removed members render without their accent color (neutral text).
+  const colorOf = (uid: string) => {
+    const m = members.find((m) => m.id === uid);
+    return m && !m.removed ? m.color : null;
+  };
 
   // Each list has its own "just me" filter. Only worth offering with 3+
   // members, since with two everyone is always involved in every payment.
@@ -278,9 +286,19 @@ export function SettleUp({
               {visibleTransactions.map((tx, i) => (
                 <li key={i} className="flex items-center gap-2 px-4 py-3">
                   <div className="flex flex-1 items-center gap-2 text-sm">
-                    <span className="font-medium">{nameOf(tx.from)}</span>
+                    <span
+                      className="font-medium"
+                      style={memberColorStyle(colorOf(tx.from))}
+                    >
+                      {nameOf(tx.from)}
+                    </span>
                     <ArrowRight className="size-4 text-muted-foreground" />
-                    <span className="font-medium">{nameOf(tx.to)}</span>
+                    <span
+                      className="font-medium"
+                      style={memberColorStyle(colorOf(tx.to))}
+                    >
+                      {nameOf(tx.to)}
+                    </span>
                   </div>
                   <span className="font-semibold tabular-nums">
                     {formatMoney(tx.amount, baseCurrency)}
@@ -335,6 +353,7 @@ export function SettleUp({
                   settlement={s}
                   baseCurrency={baseCurrency}
                   nameOf={nameOf}
+                  colorOf={colorOf}
                   onDelete={setToDelete}
                 />
               ))}
@@ -428,11 +447,13 @@ function SettlementItem({
   settlement: s,
   baseCurrency,
   nameOf,
+  colorOf,
   onDelete,
 }: {
   settlement: SettlementRow;
   baseCurrency: string;
   nameOf: (uid: string) => string;
+  colorOf: (uid: string) => string | null;
   onDelete: (settlement: SettlementRow) => void;
 }) {
   const t = useT();
@@ -442,9 +463,19 @@ function SettlementItem({
     <li className="flex items-center gap-2 px-4 py-3">
       <div className="flex flex-1 flex-col">
         <div className="flex items-center gap-2 text-sm">
-          <span className="font-medium">{nameOf(s.fromUserId)}</span>
+          <span
+            className="font-medium"
+            style={memberColorStyle(colorOf(s.fromUserId))}
+          >
+            {nameOf(s.fromUserId)}
+          </span>
           <ArrowRight className="size-3.5 text-muted-foreground" />
-          <span className="font-medium">{nameOf(s.toUserId)}</span>
+          <span
+            className="font-medium"
+            style={memberColorStyle(colorOf(s.toUserId))}
+          >
+            {nameOf(s.toUserId)}
+          </span>
         </div>
         <span className="text-xs text-muted-foreground">
           {s.date}
@@ -591,6 +622,7 @@ function SettleDialog({
                   {members.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       {m.id === currentUserId ? t.common.you : m.name}
+                      {m.removed ? ` ${t.common.removedSuffix}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -606,6 +638,7 @@ function SettleDialog({
                   {members.map((m) => (
                     <SelectItem key={m.id} value={m.id}>
                       {m.id === currentUserId ? t.common.you : m.name}
+                      {m.removed ? ` ${t.common.removedSuffix}` : ""}
                     </SelectItem>
                   ))}
                 </SelectContent>

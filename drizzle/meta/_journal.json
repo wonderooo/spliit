@@ -15,6 +15,20 @@
       "when": 1782836732403,
       "tag": "0001_broken_shockwave",
       "breakpoints": true
+    },
+    {
+      "idx": 2,
+      "version": "7",
+      "when": 1782936972318,
+      "tag": "0002_secret_loners",
+      "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1783007183346,
+      "tag": "0003_amazing_hellfire_club",
+      "breakpoints": true
     }
   ]
 }

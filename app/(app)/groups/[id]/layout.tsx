@@ -21,7 +21,7 @@ export default async function GroupLayout({
   if (!group) notFound();
 
   const membership = await getMembership(id, user.id);
-  if (!membership) redirect("/dashboard");
+  if (!membership || membership.removedAt) redirect("/dashboard");
 
   return (
     <div className="flex flex-col gap-4">

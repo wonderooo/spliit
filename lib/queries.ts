@@ -1,5 +1,5 @@
 import "server-only";
-import { and, countDistinct, desc, eq, sql } from "drizzle-orm";
+import { and, countDistinct, desc, eq, isNull, sql } from "drizzle-orm";
 import { db } from "@/lib/db";
 import {
   groups,
@@ -22,6 +22,10 @@ export type MemberUser = {
   name: string;
   email: string;
   image: string | null;
+  /** Per-group accent color key (see lib/member-colors), or null if unassigned. */
+  color: string | null;
+  /** True when the owner removed this member (their data is kept regardless). */
+  removed: boolean;
 };
 
 /** The membership row for a user in a group, or null if they're not a member. */
@@ -48,7 +52,7 @@ export async function getUserGroups(userId: string) {
     })
     .from(groups)
     .innerJoin(groupMembers, eq(groupMembers.groupId, groups.id))
-    .where(eq(groupMembers.userId, userId))
+    .where(and(eq(groupMembers.userId, userId), isNull(groupMembers.removedAt)))
     .orderBy(desc(groups.createdAt));
   return rows;
 }
@@ -70,6 +74,8 @@ export async function getGroupMembers(groupId: string): Promise<MemberUser[]> {
       name: sql<string>`coalesce(${groupMembers.name}, ${userTable.name})`,
       email: userTable.email,
       image: userTable.image,
+      color: groupMembers.color,
+      removed: sql<boolean>`${groupMembers.removedAt} is not null`,
       joinedAt: groupMembers.joinedAt,
     })
     .from(groupMembers)

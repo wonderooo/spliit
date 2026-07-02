@@ -3,10 +3,19 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Copy, Mail, UserPlus, X, Check, Pencil } from "lucide-react";
+import { Copy, Mail, UserPlus, X, Check, Pencil, UserMinus } from "lucide-react";
 import { createInvite, revokeInvite } from "@/server/actions/invites";
-import { updateMemberName } from "@/server/actions/members";
+import {
+  updateMemberName,
+  updateMemberColor,
+  removeMember,
+} from "@/server/actions/members";
 import type { MemberUser } from "@/lib/queries";
+import {
+  memberColorStyle,
+  memberAvatarStyle,
+} from "@/lib/member-colors";
+import { ColorSwatches } from "@/components/color-swatches";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -17,6 +26,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -51,24 +61,52 @@ export function MembersPanel({
   ownerId: string;
 }) {
   const t = useT();
+  const router = useRouter();
+  const [toRemove, setToRemove] = useState<MemberUser | null>(null);
+  const [removing, startRemove] = useTransition();
+
+  const isOwnerViewer = currentUserId === ownerId;
+  const activeCount = members.filter((m) => !m.removed).length;
+  // Active members first, removed ones last.
+  const ordered = [...members].sort(
+    (a, b) => Number(a.removed) - Number(b.removed),
+  );
+
+  function confirmRemove() {
+    if (!toRemove) return;
+    const target = toRemove;
+    startRemove(async () => {
+      const res = await removeMember({ groupId, userId: target.id });
+      if (res.ok) {
+        toast.success(t.membersPanel.memberRemoved);
+        setToRemove(null);
+        router.refresh();
+      } else {
+        toast.error(errorText(t, res.error));
+      }
+    });
+  }
+
   return (
     <div className="flex flex-col gap-5">
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <h2 className="text-sm font-semibold text-muted-foreground">
-            {format(t.membersPanel.membersCount, { count: members.length })}
+            {format(t.membersPanel.membersCount, { count: activeCount })}
           </h2>
           <InviteDialog groupId={groupId} />
         </div>
         <Card className="gap-0 p-0">
           <ul className="divide-y">
-            {members.map((m) => (
+            {ordered.map((m) => (
               <MemberRow
                 key={m.id}
                 member={m}
                 groupId={groupId}
                 isCurrentUser={m.id === currentUserId}
                 isOwner={m.id === ownerId}
+                canRemove={isOwnerViewer && m.id !== currentUserId && !m.removed}
+                onRemove={() => setToRemove(m)}
               />
             ))}
           </ul>
@@ -93,6 +131,40 @@ export function MembersPanel({
           </Card>
         </section>
       )}
+
+      <Dialog
+        open={toRemove != null}
+        onOpenChange={(o) => {
+          if (!o) setToRemove(null);
+        }}
+      >
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>{t.membersPanel.removeTitle}</DialogTitle>
+            <DialogDescription>
+              {toRemove
+                ? format(t.membersPanel.removeBody, { name: toRemove.name })
+                : null}
+            </DialogDescription>
+          </DialogHeader>
+          <DialogFooter className="gap-2 sm:gap-2">
+            <Button
+              variant="outline"
+              disabled={removing}
+              onClick={() => setToRemove(null)}
+            >
+              {t.common.cancel}
+            </Button>
+            <Button
+              variant="destructive"
+              disabled={removing}
+              onClick={confirmRemove}
+            >
+              {t.membersPanel.remove}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
@@ -102,36 +174,87 @@ function MemberRow({
   groupId,
   isCurrentUser,
   isOwner,
+  canRemove,
+  onRemove,
 }: {
   member: MemberUser;
   groupId: string;
   isCurrentUser: boolean;
   isOwner: boolean;
+  canRemove: boolean;
+  onRemove: () => void;
 }) {
   const t = useT();
   const router = useRouter();
   const [editing, setEditing] = useState(false);
   const [name, setName] = useState(member.name);
+  const [color, setColor] = useState(member.color);
   const [pending, startTransition] = useTransition();
 
+  function cancelEdit() {
+    setEditing(false);
+    setName(member.name);
+    setColor(member.color);
+  }
+
+  // Name and color are both staged in edit mode and committed together on Save,
+  // so the whole row edits with one consistent Save/Cancel.
   function onSave(e: React.FormEvent) {
     e.preventDefault();
-    const next = name.trim();
-    if (next === "" || next === member.name) {
-      setEditing(false);
-      setName(member.name);
+    const nextName = name.trim();
+    const nameChanged = nextName !== "" && nextName !== member.name;
+    const colorChanged = color !== member.color && color != null;
+    if (!nameChanged && !colorChanged) {
+      cancelEdit();
       return;
     }
     startTransition(async () => {
-      const res = await updateMemberName({ groupId, name: next });
-      if (res.ok) {
-        toast.success(t.membersPanel.nameUpdated);
-        setEditing(false);
-        router.refresh();
-      } else {
-        toast.error(errorText(t, res.error));
+      if (nameChanged) {
+        const res = await updateMemberName({ groupId, name: nextName });
+        if (!res.ok) {
+          toast.error(errorText(t, res.error));
+          return;
+        }
       }
+      if (colorChanged) {
+        const res = await updateMemberColor({ groupId, color });
+        if (!res.ok) {
+          toast.error(errorText(t, res.error));
+          return;
+        }
+      }
+      toast.success(
+        nameChanged ? t.membersPanel.nameUpdated : t.membersPanel.colorUpdated,
+      );
+      setEditing(false);
+      router.refresh();
     });
+  }
+
+  // Removed members: kept visible (their data stays) but inert - no edit,
+  // no color, greyed out with a badge.
+  if (member.removed) {
+    return (
+      <li className="flex items-center gap-3 px-4 py-3 opacity-60">
+        <Avatar className="size-8">
+          {member.image ? (
+            <AvatarImage src={member.image} alt={member.name} />
+          ) : null}
+          <AvatarFallback className="text-xs">
+            {initials(member.name)}
+          </AvatarFallback>
+        </Avatar>
+        <div className="min-w-0 flex-1">
+          <p className="truncate text-sm font-medium text-muted-foreground">
+            {member.name}
+          </p>
+          <p className="truncate text-xs text-muted-foreground">
+            {member.email}
+          </p>
+        </div>
+        <Badge variant="secondary">{t.membersPanel.removedBadge}</Badge>
+      </li>
+    );
   }
 
   return (
@@ -140,41 +263,41 @@ function MemberRow({
         {member.image ? (
           <AvatarImage src={member.image} alt={member.name} />
         ) : null}
-        <AvatarFallback className="text-xs">
+        <AvatarFallback className="text-xs" style={memberAvatarStyle(color)}>
           {initials(member.name)}
         </AvatarFallback>
       </Avatar>
       {editing ? (
-        <form onSubmit={onSave} className="flex flex-1 items-center gap-2">
-          <Input
-            autoFocus
-            value={name}
-            onChange={(e) => setName(e.target.value)}
-            maxLength={80}
-            disabled={pending}
-            className="h-8"
-          />
-          <Button type="submit" size="sm" disabled={pending}>
-            {t.common.save}
-          </Button>
-          <Button
-            type="button"
-            size="sm"
-            variant="ghost"
-            disabled={pending}
-            onClick={() => {
-              setEditing(false);
-              setName(member.name);
-            }}
-          >
-            {t.common.cancel}
-          </Button>
+        <form onSubmit={onSave} className="flex flex-1 flex-col gap-2">
+          <div className="flex items-center gap-2">
+            <Input
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={80}
+              disabled={pending}
+              className="h-8"
+            />
+            <Button type="submit" size="sm" disabled={pending}>
+              {t.common.save}
+            </Button>
+            <Button
+              type="button"
+              size="sm"
+              variant="ghost"
+              disabled={pending}
+              onClick={cancelEdit}
+            >
+              {t.common.cancel}
+            </Button>
+          </div>
+          <ColorSwatches value={color} onChange={setColor} disabled={pending} />
         </form>
       ) : (
         <>
           <div className="min-w-0 flex-1">
             <p className="truncate text-sm font-medium">
-              {member.name}
+              <span style={memberColorStyle(color)}>{member.name}</span>
               {isCurrentUser && (
                 <span className="text-muted-foreground">
                   {" "}
@@ -194,6 +317,17 @@ function MemberRow({
               aria-label={t.membersPanel.editYourName}
             >
               <Pencil className="size-4" />
+            </button>
+          )}
+          {canRemove && (
+            <button
+              onClick={onRemove}
+              className="rounded-md p-1 text-muted-foreground hover:text-rose-500"
+              aria-label={format(t.membersPanel.removeMemberAria, {
+                name: member.name,
+              })}
+            >
+              <UserMinus className="size-4" />
             </button>
           )}
         </>

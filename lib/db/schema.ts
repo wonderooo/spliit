@@ -109,8 +109,16 @@ export const groupMembers = pgTable(
       .references(() => user.id, { onDelete: "cascade" }),
     /** Per-group display name. Null falls back to the user's account name. */
     name: text("name"),
+    /** Per-group accent color key (see lib/member-colors). Null until assigned. */
+    color: text("color"),
     role: text("role").$type<MemberRole>().default("member").notNull(),
     joinedAt: timestamp("joined_at").defaultNow().notNull(),
+    /**
+     * When the owner removed this member. Null = active. Soft delete keeps the
+     * row so the member's expenses, splits, settlements, name and color still
+     * resolve everywhere they already appear.
+     */
+    removedAt: timestamp("removed_at"),
   },
   (t) => [
     unique("group_members_group_user_unique").on(t.groupId, t.userId),

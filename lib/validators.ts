@@ -1,6 +1,7 @@
 import { z } from "zod";
 import { splitTypes } from "@/lib/db/schema";
 import { CURRENCIES } from "@/lib/currency";
+import { MEMBER_COLORS } from "@/lib/member-colors";
 
 const currencyCodes = CURRENCIES.map((c) => c.code) as [string, ...string[]];
 
@@ -31,6 +32,23 @@ export const updateMemberNameSchema = z.object({
   name: memberNameSchema,
 });
 export type UpdateMemberNameInput = z.infer<typeof updateMemberNameSchema>;
+
+/** Per-group accent color key a member picks when joining or in the members tab. */
+export const memberColorSchema = z.enum(
+  MEMBER_COLORS as unknown as [string, ...string[]],
+);
+
+export const updateMemberColorSchema = z.object({
+  groupId: z.uuid(),
+  color: memberColorSchema,
+});
+export type UpdateMemberColorInput = z.infer<typeof updateMemberColorSchema>;
+
+export const removeMemberSchema = z.object({
+  groupId: z.uuid(),
+  userId: z.string().min(1),
+});
+export type RemoveMemberInput = z.infer<typeof removeMemberSchema>;
 
 const splitEntrySchema = z.object({
   userId: z.string().min(1),

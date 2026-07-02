@@ -81,6 +81,18 @@
   --sidebar-accent-foreground: oklch(0.205 0 0);
   --sidebar-border: oklch(0.922 0 0);
   --sidebar-ring: oklch(0.708 0 0);
+
+  /* Per-member accent colors (light theme): mid-dark, muted, readable on white. */
+  --member-rose: oklch(0.55 0.15 15);
+  --member-orange: oklch(0.58 0.15 55);
+  --member-amber: oklch(0.58 0.13 75);
+  --member-lime: oklch(0.56 0.14 130);
+  --member-emerald: oklch(0.55 0.13 155);
+  --member-teal: oklch(0.55 0.11 185);
+  --member-cyan: oklch(0.56 0.12 210);
+  --member-blue: oklch(0.56 0.15 255);
+  --member-violet: oklch(0.55 0.16 285);
+  --member-fuchsia: oklch(0.56 0.17 330);
 }
 
 .dark {
@@ -115,6 +127,18 @@
   --sidebar-accent-foreground: oklch(0.985 0 0);
   --sidebar-border: oklch(1 0 0 / 10%);
   --sidebar-ring: oklch(0.556 0 0);
+
+  /* Per-member accent colors (dark theme): lighter so they read on near-black. */
+  --member-rose: oklch(0.72 0.14 15);
+  --member-orange: oklch(0.74 0.14 55);
+  --member-amber: oklch(0.78 0.12 75);
+  --member-lime: oklch(0.78 0.14 130);
+  --member-emerald: oklch(0.75 0.13 155);
+  --member-teal: oklch(0.75 0.11 185);
+  --member-cyan: oklch(0.76 0.12 210);
+  --member-blue: oklch(0.72 0.14 255);
+  --member-violet: oklch(0.72 0.15 285);
+  --member-fuchsia: oklch(0.73 0.16 330);
 }
 
 @layer base {

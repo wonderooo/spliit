@@ -5,6 +5,7 @@ import { db } from "@/lib/db";
 import { groups, groupMembers } from "@/lib/db/schema";
 import { getSession } from "@/lib/session";
 import { createGroupSchema } from "@/lib/validators";
+import { pickMemberColor } from "@/lib/member-colors";
 import {
   ok,
   fail,
@@ -38,6 +39,7 @@ export async function createGroup(
     groupId: group.id,
     userId: session.user.id,
     role: "owner",
+    color: pickMemberColor([]),
   });
 
   revalidatePath("/dashboard");

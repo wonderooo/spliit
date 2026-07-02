@@ -12,7 +12,8 @@
     "loading": "Loading…",
     "language": "Language",
     "toggleTheme": "Toggle theme",
-    "signOut": "Sign out"
+    "signOut": "Sign out",
+    "removedSuffix": "(removed)"
   },
   "nav": {
     "expenses": "Expenses",
@@ -143,7 +144,9 @@
     "unknownSplitType": "Unknown split type.",
     "couldNotStartSignIn": "Could not start sign-in. Please try again.",
     "assignItemToSomeone": "Assign at least one item to someone.",
-    "pickRecipient": "Pick who received the payment."
+    "pickRecipient": "Pick who received the payment.",
+    "notGroupOwner": "Only the group owner can remove members.",
+    "cannotRemoveSelf": "You can't remove yourself."
   },
   "pages": {
     "dashboard": {
@@ -286,8 +289,16 @@
     "membersCount": "Members ({count})",
     "pendingInvites": "Pending invites",
     "nameUpdated": "Name updated",
+    "colorUpdated": "Color updated",
+    "yourColor": "Your color",
     "youSuffix": "(You)",
     "owner": "Owner",
+    "removedBadge": "Removed",
+    "memberRemoved": "Member removed",
+    "removeMemberAria": "Remove {name}",
+    "removeTitle": "Remove this member?",
+    "removeBody": "{name} will lose access to the group, but their expenses, balances and payments stay. This can't be undone.",
+    "remove": "Remove",
     "editYourName": "Edit your name",
     "inviteLinkCopied": "Invite link copied",
     "inviteRevoked": "Invite revoked",
@@ -311,6 +322,7 @@
     "nameLabel": "Your name in this group",
     "namePlaceholder": "e.g. Alex",
     "nameHelp": "This is how you'll show up to the group. You can change it later.",
+    "colorLabel": "Your color",
     "joining": "Joining…",
     "joinGroup": "Join group"
   },
