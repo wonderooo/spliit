@@ -18,8 +18,11 @@ import { cn } from "@/lib/utils";
 
 export type SortOption = "date-desc" | "date-asc" | "amount-desc" | "amount-asc";
 export type FilterType = "all" | "shared" | "personal";
+export type FilterScope = "mine" | "everyone";
 
 export function ExpenseFilters({
+  scope,
+  onScopeChange,
   sort,
   onSortChange,
   filterType,
@@ -29,6 +32,8 @@ export function ExpenseFilters({
   payers,
   currentUserId,
 }: {
+  scope: FilterScope;
+  onScopeChange: (value: FilterScope) => void;
   sort: SortOption;
   onSortChange: (value: SortOption) => void;
   filterType: FilterType;
@@ -39,8 +44,11 @@ export function ExpenseFilters({
   currentUserId: string;
 }) {
   const t = useT();
+  // "mine" is the default scope, so only "everyone" counts as an active filter.
   const activeFilters =
-    (filterType !== "all" ? 1 : 0) + (filterPayer !== "all" ? 1 : 0);
+    (scope !== "mine" ? 1 : 0) +
+    (filterType !== "all" ? 1 : 0) +
+    (filterPayer !== "all" ? 1 : 0);
 
   return (
     <div className="flex items-center gap-2">
@@ -97,6 +105,21 @@ export function ExpenseFilters({
           </Button>
         </DropdownMenuTrigger>
         <DropdownMenuContent align="start" className="min-w-44">
+          <DropdownMenuLabel>{t.expenseFilters.scopeLabel}</DropdownMenuLabel>
+          <DropdownMenuRadioGroup
+            value={scope}
+            onValueChange={(v) => onScopeChange(v as FilterScope)}
+          >
+            <DropdownMenuRadioItem value="mine">
+              {t.expenseFilters.scopeMine}
+            </DropdownMenuRadioItem>
+            <DropdownMenuRadioItem value="everyone">
+              {t.expenseFilters.scopeEveryone}
+            </DropdownMenuRadioItem>
+          </DropdownMenuRadioGroup>
+
+          <DropdownMenuSeparator />
+
           <DropdownMenuLabel>{t.expenseFilters.typeLabel}</DropdownMenuLabel>
           <DropdownMenuRadioGroup
             value={filterType}

@@ -10,6 +10,7 @@ import {
   updateMemberNameSchema,
   updateMemberColorSchema,
   removeMemberSchema,
+  leaveGroupSchema,
 } from "@/lib/validators";
 import {
   ok,
@@ -88,6 +89,46 @@ export async function removeMember(input: unknown): Promise<ActionResult> {
 
   revalidatePath(`/groups/${groupId}`);
   revalidatePath(`/groups/${groupId}/members`);
+  return ok();
+}
+
+/**
+ * Leave a group yourself. Same soft-removal as being removed by the owner: the
+ * membership is marked removed so expenses/splits keep resolving, but access is
+ * revoked. The owner can't leave (it would orphan owner-only controls).
+ */
+export async function leaveGroup(input: unknown): Promise<ActionResult> {
+  const session = await getSession();
+  if (!session?.user) return fail("notSignedIn");
+
+  const parsed = leaveGroupSchema.safeParse(input);
+  if (!parsed.success) {
+    return fail(
+      (parsed.error.issues[0]?.message as ActionErrorCode) ?? "invalidInput",
+    );
+  }
+  const { groupId } = parsed.data;
+
+  const me = await getMembership(groupId, session.user.id);
+  if (!me || me.removedAt) return fail("notAMember");
+  if (me.role === "owner") return fail("ownerCannotLeave");
+
+  const result = await db
+    .update(groupMembers)
+    .set({ removedAt: new Date() })
+    .where(
+      and(
+        eq(groupMembers.groupId, groupId),
+        eq(groupMembers.userId, session.user.id),
+        isNull(groupMembers.removedAt),
+      ),
+    )
+    .returning({ id: groupMembers.id });
+
+  if (result.length === 0) return fail("notAMember");
+
+  revalidatePath(`/groups/${groupId}`);
+  revalidatePath("/dashboard");
   return ok();
 }
 

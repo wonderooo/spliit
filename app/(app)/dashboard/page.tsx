@@ -5,7 +5,8 @@ import { getUserGroups, getGroupBalances } from "@/lib/queries";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { BalanceAmount } from "@/components/balance-amount";
-import { Plus, Users, ArrowRight } from "lucide-react";
+import { GroupCard } from "@/components/group-card";
+import { Plus, Users } from "lucide-react";
 
 export default async function DashboardPage() {
   const dict = await getDictionary();
@@ -90,39 +91,15 @@ export default async function DashboardPage() {
         <ul className="flex flex-col gap-3">
           {withBalances.map((g) => (
             <li key={g.id}>
-              <Link href={`/groups/${g.id}`}>
-                <Card className="flex-row items-center justify-between gap-3 p-4 transition-colors hover:border-foreground/20">
-                  <div className="min-w-0">
-                    <p className="truncate font-semibold">{g.name}</p>
-                    <p className="text-xs text-muted-foreground">
-                      {g.baseCurrency}
-                      {g.description ? ` · ${g.description}` : ""}
-                    </p>
-                  </div>
-                  <div className="flex items-center gap-2">
-                    <div className="text-right">
-                      {g.userNet === 0 ? (
-                        <span className="text-sm text-muted-foreground">
-                          {dict.pages.dashboard.settledUp}
-                        </span>
-                      ) : (
-                        <>
-                          <BalanceAmount
-                            minor={g.userNet}
-                            currency={g.baseCurrency}
-                          />
-                          <p className="text-xs text-muted-foreground">
-                            {g.userNet > 0
-                              ? dict.pages.dashboard.youAreOwed
-                              : dict.pages.dashboard.youOwe}
-                          </p>
-                        </>
-                      )}
-                    </div>
-                    <ArrowRight className="size-4 text-muted-foreground" />
-                  </div>
-                </Card>
-              </Link>
+              <GroupCard
+                id={g.id}
+                name={g.name}
+                description={g.description}
+                baseCurrency={g.baseCurrency}
+                userNet={g.userNet}
+                role={g.role}
+                createdAt={g.createdAt}
+              />
             </li>
           ))}
         </ul>

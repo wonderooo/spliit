@@ -144,9 +144,10 @@
     "couldNotStartSignIn": "Could not start sign-in. Please try again.",
     "assignItemToSomeone": "Assign at least one item to someone.",
     "pickRecipient": "Pick who received the payment.",
-    "notGroupOwner": "Only the group owner can remove members.",
+    "notGroupOwner": "Only the group owner can do that.",
     "cannotRemoveSelf": "You can't remove yourself.",
-    "notExpenseOwner": "Only the person this own expense belongs to can change it."
+    "notExpenseOwner": "Only the person this own expense belongs to can change it.",
+    "ownerCannotLeave": "The owner can't leave the group."
   },
   "pages": {
     "dashboard": {
@@ -158,7 +159,8 @@
       "settledUp": "settled up",
       "emptyTitle": "No groups yet",
       "emptyBody": "Create a group for your next trip or shared house to start splitting expenses.",
-      "createGroup": "Create a group"
+      "createGroup": "Create a group",
+      "createdOn": "Created {date}"
     },
     "newGroup": {
       "title": "New group"
@@ -259,6 +261,9 @@
     "sortAmountDesc": "Most expensive",
     "sortAmountAsc": "Cheapest",
     "filterLabel": "Filter",
+    "scopeLabel": "Show",
+    "scopeMine": "Shared and mine",
+    "scopeEveryone": "Everyone's",
     "typeLabel": "Type",
     "typeAll": "All",
     "typeShared": "Shared",
@@ -340,7 +345,19 @@
     "emailHelp": "Leave blank and anyone with the link can join. Set an email to lock the link to that one person.",
     "creating": "Creating…",
     "createInviteLink": "Create invite link",
-    "copyInviteLink": "Copy invite link"
+    "copyInviteLink": "Copy invite link",
+    "leave": "Leave group",
+    "leftGroup": "You left the group",
+    "leaveTitle": "Leave this group?",
+    "leaveBody": "You'll lose access to the group, but your expenses, balances and payments stay. This can't be undone."
+  },
+  "editGroup": {
+    "edit": "Edit group",
+    "title": "Edit group",
+    "description": "Update the group's name, description and base currency.",
+    "updated": "Group updated",
+    "saving": "Saving…",
+    "submit": "Save changes"
   },
   "acceptInvite": {
     "alreadyMember": "You're already in this group",

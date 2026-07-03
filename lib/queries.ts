@@ -50,6 +50,7 @@ export async function getUserGroups(userId: string) {
       description: groups.description,
       baseCurrency: groups.baseCurrency,
       createdAt: groups.createdAt,
+      role: groupMembers.role,
     })
     .from(groups)
     .innerJoin(groupMembers, eq(groupMembers.groupId, groups.id))

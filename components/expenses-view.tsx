@@ -18,6 +18,7 @@ import {
   ExpenseFilters,
   type SortOption,
   type FilterType,
+  type FilterScope,
 } from "@/components/expense-filters";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -55,10 +56,13 @@ export function ExpensesView({
   const [scanOpen, setScanOpen] = useState(false);
   const [scanSeed, setScanSeed] = useState<ScanResult | null>(null);
   const [sort, setSort] = useState<SortOption>("date-desc");
+  // Default to only the current user's expenses (paid by or splitting them).
+  const [scope, setScope] = useState<FilterScope>("mine");
   const [filterType, setFilterType] = useState<FilterType>("all");
   const [filterPayer, setFilterPayer] = useState("all");
 
   function clearFilters() {
+    setScope("mine");
     setFilterType("all");
     setFilterPayer("all");
   }
@@ -100,6 +104,10 @@ export function ExpensesView({
 
   const visibleExpenses = useMemo(() => {
     let list = optimistic;
+    // Default scope: every shared expense, but only the current user's own
+    // (personal) expenses - other people's personal expenses are hidden.
+    if (scope === "mine")
+      list = list.filter((e) => !e.personal || e.paidBy === currentUserId);
     if (filterType === "shared") list = list.filter((e) => !e.personal);
     else if (filterType === "personal") list = list.filter((e) => e.personal);
     if (filterPayer !== "all")
@@ -125,7 +133,7 @@ export function ExpensesView({
           return b.baseAmount - a.baseAmount;
       }
     });
-  }, [optimistic, sort, filterType, filterPayer]);
+  }, [optimistic, sort, scope, filterType, filterPayer, currentUserId]);
 
   function buildOptimistic(input: CreateExpenseInput): ExpenseWithSplits {
     let amountMinor = 0;
@@ -272,6 +280,8 @@ export function ExpensesView({
         {optimistic.length > 0 && (
           <div className="order-3 sm:order-4 sm:ml-auto">
             <ExpenseFilters
+              scope={scope}
+              onScopeChange={setScope}
               sort={sort}
               onSortChange={setSort}
               filterType={filterType}

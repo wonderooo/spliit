@@ -144,9 +144,10 @@
     "couldNotStartSignIn": "Nie udało się rozpocząć logowania. Spróbuj ponownie.",
     "assignItemToSomeone": "Przypisz co najmniej jedną pozycję do kogoś.",
     "pickRecipient": "Wybierz, kto otrzymał płatność.",
-    "notGroupOwner": "Tylko właściciel grupy może usuwać uczestników.",
+    "notGroupOwner": "Tylko właściciel grupy może to zrobić.",
     "cannotRemoveSelf": "Nie możesz usunąć samego siebie.",
-    "notExpenseOwner": "Tylko osoba, do której należy ten własny wydatek, może go zmienić."
+    "notExpenseOwner": "Tylko osoba, do której należy ten własny wydatek, może go zmienić.",
+    "ownerCannotLeave": "Właściciel nie może opuścić grupy."
   },
   "pages": {
     "dashboard": {
@@ -158,7 +159,8 @@
       "settledUp": "rozliczono",
       "emptyTitle": "Brak grup",
       "emptyBody": "Załóż grupę na kolejną podróż lub wspólne mieszkanie, aby zacząć dzielić wydatki.",
-      "createGroup": "Załóż grupę"
+      "createGroup": "Załóż grupę",
+      "createdOn": "Utworzono {date}"
     },
     "newGroup": {
       "title": "Nowa grupa"
@@ -259,6 +261,9 @@
     "sortAmountDesc": "Najdroższe",
     "sortAmountAsc": "Najtańsze",
     "filterLabel": "Filtruj",
+    "scopeLabel": "Pokaż",
+    "scopeMine": "Wspólne i moje",
+    "scopeEveryone": "Wszystkich",
     "typeLabel": "Typ",
     "typeAll": "Wszystkie",
     "typeShared": "Wspólne",
@@ -340,7 +345,19 @@
     "emailHelp": "Zostaw puste, a dołączyć może każdy z linkiem. Podaj e-mail, aby przypisać link do jednej osoby.",
     "creating": "Tworzenie…",
     "createInviteLink": "Utwórz link z zaproszeniem",
-    "copyInviteLink": "Skopiuj link z zaproszeniem"
+    "copyInviteLink": "Skopiuj link z zaproszeniem",
+    "leave": "Opuść grupę",
+    "leftGroup": "Opuściłeś grupę",
+    "leaveTitle": "Opuścić tę grupę?",
+    "leaveBody": "Stracisz dostęp do grupy, ale Twoje wydatki, salda i płatności zostają. Tego nie można cofnąć."
+  },
+  "editGroup": {
+    "edit": "Edytuj grupę",
+    "title": "Edytuj grupę",
+    "description": "Zmień nazwę, opis i walutę bazową grupy.",
+    "updated": "Zaktualizowano grupę",
+    "saving": "Zapisywanie…",
+    "submit": "Zapisz zmiany"
   },
   "acceptInvite": {
     "alreadyMember": "Jesteś już w tej grupie",

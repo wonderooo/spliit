@@ -14,6 +14,21 @@ export const createGroupSchema = z.object({
 });
 export type CreateGroupInput = z.infer<typeof createGroupSchema>;
 
+/** Owner edits the group's basic info. Same fields as create, plus the id. */
+export const updateGroupSchema = z.object({
+  groupId: z.uuid(),
+  name: z.string().trim().min(1, "nameRequired").max(80),
+  description: z.string().trim().max(500).optional().or(z.literal("")),
+  baseCurrency: currencySchema,
+});
+export type UpdateGroupInput = z.infer<typeof updateGroupSchema>;
+
+/** A member leaves a group (self soft-removal). */
+export const leaveGroupSchema = z.object({
+  groupId: z.uuid(),
+});
+export type LeaveGroupInput = z.infer<typeof leaveGroupSchema>;
+
 export const inviteSchema = z.object({
   groupId: z.uuid(),
   email: z.email().trim().optional().or(z.literal("")),

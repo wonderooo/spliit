@@ -4,6 +4,7 @@ import { requireUser } from "@/lib/session";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getGroup, getMembership } from "@/lib/queries";
 import { GroupTabs } from "@/components/group-tabs";
+import { EditGroupDialog } from "@/components/edit-group-dialog";
 import { ChevronLeft } from "lucide-react";
 
 export default async function GroupLayout({
@@ -32,12 +33,22 @@ export default async function GroupLayout({
         <ChevronLeft className="size-4" />
         {dict.pages.group.allGroups}
       </Link>
-      <div>
-        <h1 className="text-2xl font-bold tracking-tight">{group.name}</h1>
-        <p className="text-sm text-muted-foreground">
-          {group.baseCurrency}
-          {group.description ? ` · ${group.description}` : ""}
-        </p>
+      <div className="flex items-start justify-between gap-3">
+        <div className="min-w-0">
+          <h1 className="text-2xl font-bold tracking-tight">{group.name}</h1>
+          <p className="text-sm text-muted-foreground">
+            {group.baseCurrency}
+            {group.description ? ` · ${group.description}` : ""}
+          </p>
+        </div>
+        {membership.role === "owner" && (
+          <EditGroupDialog
+            groupId={id}
+            name={group.name}
+            description={group.description ?? ""}
+            baseCurrency={group.baseCurrency}
+          />
+        )}
       </div>
       <GroupTabs groupId={id} />
       <div className="pt-1">{children}</div>
