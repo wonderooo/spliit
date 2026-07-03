@@ -27,6 +27,8 @@ export type MemberUser = {
   color: string | null;
   /** True when the owner removed this member (their data is kept regardless). */
   removed: boolean;
+  /** True for owner-added guest members who have no sign-in account. */
+  synthetic: boolean;
 };
 
 /** The membership row for a user in a group, or null if they're not a member. */
@@ -78,6 +80,7 @@ export async function getGroupMembers(groupId: string): Promise<MemberUser[]> {
       image: userTable.image,
       color: groupMembers.color,
       removed: sql<boolean>`${groupMembers.removedAt} is not null`,
+      synthetic: groupMembers.synthetic,
       joinedAt: groupMembers.joinedAt,
     })
     .from(groupMembers)

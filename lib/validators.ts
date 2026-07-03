@@ -45,6 +45,8 @@ export const memberNameSchema = z
 export const updateMemberNameSchema = z.object({
   groupId: z.uuid(),
   name: memberNameSchema,
+  /** Omitted = rename yourself. Set by the owner to rename a guest member. */
+  userId: z.string().min(1).optional(),
 });
 export type UpdateMemberNameInput = z.infer<typeof updateMemberNameSchema>;
 
@@ -56,8 +58,30 @@ export const memberColorSchema = z.enum(
 export const updateMemberColorSchema = z.object({
   groupId: z.uuid(),
   color: memberColorSchema,
+  /** Omitted = recolor yourself. Set by the owner to recolor a guest member. */
+  userId: z.string().min(1).optional(),
 });
 export type UpdateMemberColorInput = z.infer<typeof updateMemberColorSchema>;
+
+/** Owner adds a guest member - someone tracked in the group without signing in. */
+export const addSyntheticMemberSchema = z.object({
+  groupId: z.uuid(),
+  name: memberNameSchema,
+  /** Accent color; auto-assigned when omitted. */
+  color: memberColorSchema.optional(),
+});
+export type AddSyntheticMemberInput = z.infer<typeof addSyntheticMemberSchema>;
+
+/** Owner moves all of a guest member's data to a signed-in member, then the
+ *  guest is deleted. */
+export const mergeSyntheticMemberSchema = z.object({
+  groupId: z.uuid(),
+  guestId: z.string().min(1),
+  targetUserId: z.string().min(1),
+});
+export type MergeSyntheticMemberInput = z.infer<
+  typeof mergeSyntheticMemberSchema
+>;
 
 export const removeMemberSchema = z.object({
   groupId: z.uuid(),

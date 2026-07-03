@@ -3,17 +3,30 @@
 import { useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Copy, Mail, UserPlus, X, Check, Pencil, UserMinus } from "lucide-react";
+import {
+  ArrowRightLeft,
+  Copy,
+  Mail,
+  UserPlus,
+  UserRoundPlus,
+  X,
+  Check,
+  Pencil,
+  UserMinus,
+} from "lucide-react";
 import { createInvite, revokeInvite } from "@/server/actions/invites";
 import {
   updateMemberName,
   updateMemberColor,
+  addSyntheticMember,
+  mergeSyntheticMember,
   removeMember,
 } from "@/server/actions/members";
 import type { MemberUser } from "@/lib/queries";
 import {
   memberColorStyle,
   memberAvatarStyle,
+  pickMemberColor,
 } from "@/lib/member-colors";
 import { ColorSwatches } from "@/components/color-swatches";
 import { Button } from "@/components/ui/button";
@@ -31,6 +44,13 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog";
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from "@/components/ui/select";
 import { useT } from "@/components/i18n-provider";
 import { errorText } from "@/lib/action-result";
 import { format } from "@/lib/i18n/config";
@@ -63,6 +83,7 @@ export function MembersPanel({
   const t = useT();
   const router = useRouter();
   const [toRemove, setToRemove] = useState<MemberUser | null>(null);
+  const [toTransfer, setToTransfer] = useState<MemberUser | null>(null);
   const [removing, startRemove] = useTransition();
 
   const isOwnerViewer = currentUserId === ownerId;
@@ -94,7 +115,17 @@ export function MembersPanel({
           <h2 className="text-sm font-semibold text-muted-foreground">
             {format(t.membersPanel.membersCount, { count: activeCount })}
           </h2>
-          <InviteDialog groupId={groupId} />
+          <div className="flex items-center gap-2">
+            {isOwnerViewer && (
+              <AddGuestDialog
+                groupId={groupId}
+                suggestedColor={pickMemberColor(
+                  members.map((m) => m.color).filter((c): c is string => !!c),
+                )}
+              />
+            )}
+            <InviteDialog groupId={groupId} />
+          </div>
         </div>
         <Card className="gap-0 p-0">
           <ul className="divide-y">
@@ -105,13 +136,31 @@ export function MembersPanel({
                 groupId={groupId}
                 isCurrentUser={m.id === currentUserId}
                 isOwner={m.id === ownerId}
+                canEdit={
+                  m.id === currentUserId ||
+                  (isOwnerViewer && m.synthetic && !m.removed)
+                }
                 canRemove={isOwnerViewer && m.id !== currentUserId && !m.removed}
+                canTransfer={isOwnerViewer && m.synthetic && !m.removed}
                 onRemove={() => setToRemove(m)}
+                onTransfer={() => setToTransfer(m)}
               />
             ))}
           </ul>
         </Card>
       </section>
+
+      {toTransfer && (
+        <TransferGuestDialog
+          guest={toTransfer}
+          groupId={groupId}
+          targets={members.filter((m) => !m.removed && !m.synthetic)}
+          currentUserId={currentUserId}
+          onOpenChange={(o) => {
+            if (!o) setToTransfer(null);
+          }}
+        />
+      )}
 
       {invites.length > 0 && (
         <section className="flex flex-col gap-2">
@@ -174,15 +223,21 @@ function MemberRow({
   groupId,
   isCurrentUser,
   isOwner,
+  canEdit,
   canRemove,
+  canTransfer,
   onRemove,
+  onTransfer,
 }: {
   member: MemberUser;
   groupId: string;
   isCurrentUser: boolean;
   isOwner: boolean;
+  canEdit: boolean;
   canRemove: boolean;
+  canTransfer: boolean;
   onRemove: () => void;
+  onTransfer: () => void;
 }) {
   const t = useT();
   const router = useRouter();
@@ -209,15 +264,25 @@ function MemberRow({
       return;
     }
     startTransition(async () => {
+      // The server treats your own id as a self-edit; any other id is an
+      // owner-managed guest edit.
       if (nameChanged) {
-        const res = await updateMemberName({ groupId, name: nextName });
+        const res = await updateMemberName({
+          groupId,
+          name: nextName,
+          userId: member.id,
+        });
         if (!res.ok) {
           toast.error(errorText(t, res.error));
           return;
         }
       }
       if (colorChanged) {
-        const res = await updateMemberColor({ groupId, color });
+        const res = await updateMemberColor({
+          groupId,
+          color,
+          userId: member.id,
+        });
         if (!res.ok) {
           toast.error(errorText(t, res.error));
           return;
@@ -249,7 +314,7 @@ function MemberRow({
             {member.name}
           </p>
           <p className="truncate text-xs text-muted-foreground">
-            {member.email}
+            {member.synthetic ? t.membersPanel.guestHint : member.email}
           </p>
         </div>
         <Badge variant="secondary">{t.membersPanel.removedBadge}</Badge>
@@ -306,17 +371,35 @@ function MemberRow({
               )}
             </p>
             <p className="truncate text-xs text-muted-foreground">
-              {member.email}
+              {member.synthetic ? t.membersPanel.guestHint : member.email}
             </p>
           </div>
           {isOwner && <Badge variant="secondary">{t.membersPanel.owner}</Badge>}
-          {isCurrentUser && (
+          {member.synthetic && (
+            <Badge variant="outline">{t.membersPanel.guestBadge}</Badge>
+          )}
+          {canEdit && (
             <button
               onClick={() => setEditing(true)}
               className="rounded-md p-1 text-muted-foreground hover:text-foreground"
-              aria-label={t.membersPanel.editYourName}
+              aria-label={
+                isCurrentUser
+                  ? t.membersPanel.editYourName
+                  : format(t.membersPanel.editGuestAria, { name: member.name })
+              }
             >
               <Pencil className="size-4" />
+            </button>
+          )}
+          {canTransfer && (
+            <button
+              onClick={onTransfer}
+              className="rounded-md p-1 text-muted-foreground hover:text-foreground"
+              aria-label={format(t.membersPanel.transferAria, {
+                name: member.name,
+              })}
+            >
+              <ArrowRightLeft className="size-4" />
             </button>
           )}
           {canRemove && (
@@ -391,6 +474,160 @@ function PendingInviteRow({
         <X className="size-4" />
       </button>
     </li>
+  );
+}
+
+/** Owner-only: move a guest's expenses and payments to a signed-in member,
+ *  deleting the guest afterwards. */
+function TransferGuestDialog({
+  guest,
+  groupId,
+  targets,
+  currentUserId,
+  onOpenChange,
+}: {
+  guest: MemberUser;
+  groupId: string;
+  targets: MemberUser[];
+  currentUserId: string;
+  onOpenChange: (open: boolean) => void;
+}) {
+  const t = useT();
+  const router = useRouter();
+  const [pending, startTransition] = useTransition();
+  const [targetUserId, setTargetUserId] = useState("");
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    startTransition(async () => {
+      const res = await mergeSyntheticMember({
+        groupId,
+        guestId: guest.id,
+        targetUserId,
+      });
+      if (res.ok) {
+        toast.success(t.membersPanel.guestTransferred);
+        onOpenChange(false);
+        router.refresh();
+      } else {
+        toast.error(errorText(t, res.error));
+      }
+    });
+  }
+
+  return (
+    <Dialog open onOpenChange={onOpenChange}>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t.membersPanel.transferTitle}</DialogTitle>
+          <DialogDescription>
+            {format(t.membersPanel.transferDescription, { name: guest.name })}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={onSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label>{t.membersPanel.transferToLabel}</Label>
+            <Select value={targetUserId} onValueChange={setTargetUserId}>
+              <SelectTrigger className="w-full">
+                <SelectValue placeholder={t.settleUp.selectPlaceholder} />
+              </SelectTrigger>
+              <SelectContent>
+                {targets.map((m) => (
+                  <SelectItem key={m.id} value={m.id}>
+                    {m.id === currentUserId ? t.common.you : m.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <Button type="submit" disabled={pending || !targetUserId}>
+            {pending
+              ? t.membersPanel.transferring
+              : t.membersPanel.transferSubmit}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Owner-only: add a guest member (no account, no sign-in) by name. */
+function AddGuestDialog({
+  groupId,
+  suggestedColor,
+}: {
+  groupId: string;
+  suggestedColor: string;
+}) {
+  const t = useT();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [pending, startTransition] = useTransition();
+  const [name, setName] = useState("");
+  const [color, setColor] = useState(suggestedColor);
+
+  function onOpenChange(v: boolean) {
+    setOpen(v);
+    if (!v) {
+      setName("");
+      setColor(suggestedColor);
+    }
+  }
+
+  function onSubmit(e: React.FormEvent) {
+    e.preventDefault();
+    startTransition(async () => {
+      const res = await addSyntheticMember({ groupId, name, color });
+      if (res.ok) {
+        toast.success(t.membersPanel.guestAdded);
+        onOpenChange(false);
+        router.refresh();
+      } else {
+        toast.error(errorText(t, res.error));
+      }
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogTrigger asChild>
+        <Button size="sm" variant="outline">
+          <UserRoundPlus className="size-4" />
+          {t.membersPanel.addGuest}
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t.membersPanel.addGuestTitle}</DialogTitle>
+          <DialogDescription>
+            {t.membersPanel.addGuestDescription}
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={onSubmit} className="flex flex-col gap-4">
+          <div className="flex flex-col gap-2">
+            <Label htmlFor="guest-name">{t.membersPanel.guestNameLabel}</Label>
+            <Input
+              id="guest-name"
+              autoFocus
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              maxLength={80}
+              placeholder={t.membersPanel.guestNamePlaceholder}
+              required
+            />
+          </div>
+          <div className="flex flex-col gap-2">
+            <Label>{t.membersPanel.guestColorLabel}</Label>
+            <ColorSwatches value={color} onChange={setColor} disabled={pending} />
+          </div>
+          <Button type="submit" disabled={pending || name.trim() === ""}>
+            {pending
+              ? t.membersPanel.addingGuest
+              : t.membersPanel.addGuestSubmit}
+          </Button>
+        </form>
+      </DialogContent>
+    </Dialog>
   );
 }
 

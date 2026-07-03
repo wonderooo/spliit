@@ -125,6 +125,13 @@ export const groupMembers = pgTable(
     /** Per-group accent color key (see lib/member-colors). Null until assigned. */
     color: text("color"),
     role: text("role").$type<MemberRole>().default("member").notNull(),
+    /**
+     * A guest member added by the owner for someone who doesn't sign in. Backed
+     * by a placeholder `user` row with no credentials, so expenses, splits and
+     * settlements reference them like any member; the owner manages their
+     * name/color.
+     */
+    synthetic: boolean("synthetic").notNull().default(false),
     joinedAt: timestamp("joined_at").defaultNow().notNull(),
     /**
      * When the owner removed this member. Null = active. Soft delete keeps the

@@ -50,6 +50,13 @@
       "when": 1783079591661,
       "tag": "0006_superb_sentinels",
       "breakpoints": true
+    },
+    {
+      "idx": 7,
+      "version": "7",
+      "when": 1783080597705,
+      "tag": "0007_sudden_cammi",
+      "breakpoints": true
     }
   ]
 }
