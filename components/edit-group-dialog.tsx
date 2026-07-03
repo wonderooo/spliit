@@ -3,8 +3,8 @@
 import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
-import { Pencil } from "lucide-react";
-import { updateGroup } from "@/server/actions/groups";
+import { Pencil, Trash2 } from "lucide-react";
+import { updateGroup, deleteGroup } from "@/server/actions/groups";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -21,6 +21,7 @@ import {
 } from "@/components/ui/dialog";
 import { useT } from "@/components/i18n-provider";
 import { errorText } from "@/lib/action-result";
+import { format } from "@/lib/i18n/config";
 
 export function EditGroupDialog({
   groupId,
@@ -132,6 +133,73 @@ export function EditGroupDialog({
             </Button>
           </DialogFooter>
         </form>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
+/** Owner-only: permanently delete the group after an explicit confirm. */
+export function DeleteGroupDialog({
+  groupId,
+  name,
+}: {
+  groupId: string;
+  name: string;
+}) {
+  const t = useT();
+  const router = useRouter();
+  const [open, setOpen] = useState(false);
+  const [deleting, startDelete] = useTransition();
+
+  function confirmDelete() {
+    startDelete(async () => {
+      const res = await deleteGroup({ groupId });
+      if (res.ok) {
+        toast.success(t.editGroup.deleted);
+        setOpen(false);
+        router.push("/dashboard");
+        router.refresh();
+      } else {
+        toast.error(errorText(t, res.error));
+      }
+    });
+  }
+
+  return (
+    <Dialog open={open} onOpenChange={setOpen}>
+      <DialogTrigger asChild>
+        <Button
+          variant="destructive"
+          size="icon-sm"
+          className="shrink-0"
+          aria-label={t.editGroup.deleteGroup}
+        >
+          <Trash2 className="size-4" />
+        </Button>
+      </DialogTrigger>
+      <DialogContent className="max-w-sm">
+        <DialogHeader>
+          <DialogTitle>{t.editGroup.deleteTitle}</DialogTitle>
+          <DialogDescription>
+            {format(t.editGroup.deleteBody, { name })}
+          </DialogDescription>
+        </DialogHeader>
+        <DialogFooter className="gap-2 sm:gap-2">
+          <Button
+            variant="outline"
+            disabled={deleting}
+            onClick={() => setOpen(false)}
+          >
+            {t.common.cancel}
+          </Button>
+          <Button
+            variant="destructive"
+            disabled={deleting}
+            onClick={confirmDelete}
+          >
+            {deleting ? t.editGroup.deleting : t.editGroup.deleteGroup}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   );

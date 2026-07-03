@@ -4,7 +4,10 @@ import { requireUser } from "@/lib/session";
 import { getDictionary } from "@/lib/i18n/dictionary";
 import { getGroup, getMembership } from "@/lib/queries";
 import { GroupTabs } from "@/components/group-tabs";
-import { EditGroupDialog } from "@/components/edit-group-dialog";
+import {
+  EditGroupDialog,
+  DeleteGroupDialog,
+} from "@/components/edit-group-dialog";
 import { ChevronLeft } from "lucide-react";
 
 export default async function GroupLayout({
@@ -42,12 +45,15 @@ export default async function GroupLayout({
           </p>
         </div>
         {membership.role === "owner" && (
-          <EditGroupDialog
-            groupId={id}
-            name={group.name}
-            description={group.description ?? ""}
-            baseCurrency={group.baseCurrency}
-          />
+          <div className="flex shrink-0 items-center gap-2">
+            <EditGroupDialog
+              groupId={id}
+              name={group.name}
+              description={group.description ?? ""}
+              baseCurrency={group.baseCurrency}
+            />
+            <DeleteGroupDialog groupId={id} name={group.name} />
+          </div>
         )}
       </div>
       <GroupTabs groupId={id} />

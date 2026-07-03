@@ -27,6 +27,12 @@ export type UpdateGroupInput = z.infer<typeof updateGroupSchema>;
 export const leaveGroupSchema = z.object({
   groupId: z.uuid(),
 });
+
+/** Owner permanently deletes a group and everything it owns. */
+export const deleteGroupSchema = z.object({
+  groupId: z.uuid(),
+});
+export type DeleteGroupInput = z.infer<typeof deleteGroupSchema>;
 export type LeaveGroupInput = z.infer<typeof leaveGroupSchema>;
 
 export const inviteSchema = z.object({

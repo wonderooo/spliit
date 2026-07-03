@@ -382,6 +382,11 @@
     "description": "Update the group's name, description and base currency.",
     "updated": "Group updated",
     "saving": "Saving…",
+    "deleteGroup": "Delete group",
+    "deleteTitle": "Delete this group?",
+    "deleteBody": "“{name}” and everything in it (expenses, payments, members, invites) will be permanently deleted. This can't be undone.",
+    "deleting": "Deleting…",
+    "deleted": "Group deleted",
     "submit": "Save changes"
   },
   "acceptInvite": {

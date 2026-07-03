@@ -382,6 +382,11 @@
     "description": "Zmień nazwę, opis i walutę bazową grupy.",
     "updated": "Zaktualizowano grupę",
     "saving": "Zapisywanie…",
+    "deleteGroup": "Usuń grupę",
+    "deleteTitle": "Usunąć tę grupę?",
+    "deleteBody": "Grupa „{name}” i cała jej zawartość (wydatki, płatności, uczestnicy, zaproszenia) zostaną trwale usunięte. Tego nie można cofnąć.",
+    "deleting": "Usuwanie…",
+    "deleted": "Usunięto grupę",
     "submit": "Zapisz zmiany"
   },
   "acceptInvite": {
