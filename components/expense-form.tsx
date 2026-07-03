@@ -97,6 +97,7 @@ export function ExpenseForm({
   const open = isControlled ? controlledOpen! : internalOpen;
   const setOpen = isControlled ? onOpenChange! : setInternalOpen;
   const [saving, setSaving] = useState(false);
+  const descRef = useRef<HTMLInputElement>(null);
 
   // A scanned receipt seeds a brand-new expense; it never applies when editing.
   const scan = expense ? undefined : initialScan;
@@ -271,7 +272,13 @@ export function ExpenseForm({
           </Button>
         </DialogTrigger>
       )}
-      <DialogContent className="max-h-[92svh] gap-4 overflow-y-auto sm:max-w-lg">
+      <DialogContent
+        className="max-h-[92svh] gap-4 overflow-y-auto sm:max-w-lg"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          descRef.current?.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>
             {personal
@@ -294,6 +301,7 @@ export function ExpenseForm({
             <Label htmlFor="desc">{t.expenseForm.descriptionLabel}</Label>
             <Input
               id="desc"
+              ref={descRef}
               value={description}
               onChange={(e) => setDescription(e.target.value)}
               placeholder={t.expenseForm.descriptionPlaceholder}

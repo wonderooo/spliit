@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import {
@@ -565,6 +565,7 @@ function AddGuestDialog({
   const [pending, startTransition] = useTransition();
   const [name, setName] = useState("");
   const [color, setColor] = useState(suggestedColor);
+  const nameRef = useRef<HTMLInputElement>(null);
 
   function onOpenChange(v: boolean) {
     setOpen(v);
@@ -596,7 +597,13 @@ function AddGuestDialog({
           {t.membersPanel.addGuest}
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-sm">
+      <DialogContent
+        className="max-w-sm"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          nameRef.current?.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{t.membersPanel.addGuestTitle}</DialogTitle>
           <DialogDescription>
@@ -608,7 +615,7 @@ function AddGuestDialog({
             <Label htmlFor="guest-name">{t.membersPanel.guestNameLabel}</Label>
             <Input
               id="guest-name"
-              autoFocus
+              ref={nameRef}
               value={name}
               onChange={(e) => setName(e.target.value)}
               maxLength={80}
@@ -639,6 +646,7 @@ function InviteDialog({ groupId }: { groupId: string }) {
   const [email, setEmail] = useState("");
   const [link, setLink] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const emailRef = useRef<HTMLInputElement>(null);
 
   function onCreate(e: React.FormEvent) {
     e.preventDefault();
@@ -678,7 +686,12 @@ function InviteDialog({ groupId }: { groupId: string }) {
           {t.membersPanel.invite}
         </Button>
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          emailRef.current?.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{t.membersPanel.inviteTitle}</DialogTitle>
           <DialogDescription>{t.membersPanel.inviteDescription}</DialogDescription>
@@ -690,6 +703,7 @@ function InviteDialog({ groupId }: { groupId: string }) {
               <Label htmlFor="invite-email">{t.membersPanel.emailLabel}</Label>
               <Input
                 id="invite-email"
+                ref={emailRef}
                 type="email"
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}

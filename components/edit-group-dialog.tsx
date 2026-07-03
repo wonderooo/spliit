@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useTransition } from "react";
+import { useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { Pencil } from "lucide-react";
@@ -40,6 +40,7 @@ export function EditGroupDialog({
   const [name, setName] = useState(initialName);
   const [description, setDescription] = useState(initialDescription);
   const [baseCurrency, setBaseCurrency] = useState(initialCurrency);
+  const nameRef = useRef<HTMLInputElement>(null);
 
   function onSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -74,7 +75,13 @@ export function EditGroupDialog({
           {t.editGroup.edit}
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-md">
+      <DialogContent
+        className="sm:max-w-md"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          nameRef.current?.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{t.editGroup.title}</DialogTitle>
           <DialogDescription>{t.editGroup.description}</DialogDescription>
@@ -84,6 +91,7 @@ export function EditGroupDialog({
             <Label htmlFor="edit-group-name">{t.createGroup.nameLabel}</Label>
             <Input
               id="edit-group-name"
+              ref={nameRef}
               value={name}
               onChange={(e) => setName(e.target.value)}
               placeholder={t.createGroup.namePlaceholder}

@@ -141,31 +141,47 @@ export function ExpenseList({
                                             </Badge>
                                         ) : null}
                                     </div>
+                                    {/* Each dot-separated segment is nowrap so
+                                        lines break only at the separators,
+                                        never inside a phrase. */}
                                     <p className="mt-1 text-xs text-muted-foreground">
-                                        {paidByLine(e.paidBy)} ·{" "}
+                                        <span className="whitespace-nowrap">
+                                            {paidByLine(e.paidBy)}
+                                        </span>
+                                        {" · "}
                                         <span className="whitespace-nowrap">
                                             {e.date}
                                         </span>
-                                        {e.personal
-                                            ? ""
-                                            : ` · ${SPLIT_LABEL[e.splitType] ?? e.splitType}`}
+                                        {e.personal ? null : (
+                                            <>
+                                                {" · "}
+                                                <span className="whitespace-nowrap">
+                                                    {SPLIT_LABEL[e.splitType] ??
+                                                        e.splitType}
+                                                </span>
+                                            </>
+                                        )}
                                         {/* Creator only when someone else
                                             entered the expense; otherwise the
                                             payer line already says it. */}
                                         {e.createdBy !== e.paidBy ? (
                                             <>
                                                 {" · "}
-                                                {e.createdBy === currentUserId
-                                                    ? t.expenseList.addedByYou
-                                                    : format(
-                                                          t.expenseList
-                                                              .addedBy,
-                                                          {
-                                                              name: nameOf(
-                                                                  e.createdBy,
-                                                              ),
-                                                          },
-                                                      )}
+                                                <span className="whitespace-nowrap">
+                                                    {e.createdBy ===
+                                                    currentUserId
+                                                        ? t.expenseList
+                                                              .addedByYou
+                                                        : format(
+                                                              t.expenseList
+                                                                  .addedBy,
+                                                              {
+                                                                  name: nameOf(
+                                                                      e.createdBy,
+                                                                  ),
+                                                              },
+                                                          )}
+                                                </span>
                                             </>
                                         ) : null}
                                     </p>

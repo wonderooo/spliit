@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useOptimistic, useState, useTransition } from "react";
+import { useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 import { ArrowRight, Plus, Trash2, PartyPopper, History } from "lucide-react";
@@ -557,6 +557,7 @@ function SettleDialog({
 }) {
   const t = useT();
   const [saving, setSaving] = useState(false);
+  const amountRef = useRef<HTMLInputElement>(null);
 
   const [fromUserId, setFromUserId] = useState(currentUserId);
   const [toUserId, setToUserId] = useState("");
@@ -640,7 +641,13 @@ function SettleDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-h-[92svh] overflow-y-auto">
+      <DialogContent
+        className="max-h-[92svh] overflow-y-auto"
+        onOpenAutoFocus={(e) => {
+          e.preventDefault();
+          amountRef.current?.focus();
+        }}
+      >
         <DialogHeader>
           <DialogTitle>{t.settleUp.dialogTitle}</DialogTitle>
           <DialogDescription>{t.settleUp.dialogDescription}</DialogDescription>
@@ -688,6 +695,7 @@ function SettleDialog({
               <Label htmlFor="s-amount">{t.settleUp.amount}</Label>
               <Input
                 id="s-amount"
+                ref={amountRef}
                 type="number"
                 inputMode="decimal"
                 step="any"
