@@ -7,7 +7,7 @@ export default function DashboardLoading() {
       {/* Title + new group button */}
       <div className="flex items-center justify-between">
         <Skeleton className="h-8 w-40" />
-        <Skeleton className="h-8 w-28 rounded-md" />
+        <Skeleton className="h-7 w-24 rounded-md" />
       </div>
 
       {/* Overall summary card */}

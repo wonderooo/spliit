@@ -242,6 +242,10 @@ export const settlements = pgTable(
     baseAmount: bigint("base_amount", { mode: "number" }).notNull(),
     date: date("date").notNull(),
     note: text("note"),
+    /** Member who recorded the payment (not necessarily the payer). */
+    createdBy: text("created_by")
+      .notNull()
+      .references(() => user.id, { onDelete: "cascade" }),
     createdAt: timestamp("created_at").defaultNow().notNull(),
   },
   (t) => [index("settlements_group_idx").on(t.groupId)],

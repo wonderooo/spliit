@@ -149,6 +149,25 @@ export function ExpenseList({
                                         {e.personal
                                             ? ""
                                             : ` · ${SPLIT_LABEL[e.splitType] ?? e.splitType}`}
+                                        {/* Creator only when someone else
+                                            entered the expense; otherwise the
+                                            payer line already says it. */}
+                                        {e.createdBy !== e.paidBy ? (
+                                            <>
+                                                {" · "}
+                                                {e.createdBy === currentUserId
+                                                    ? t.expenseList.addedByYou
+                                                    : format(
+                                                          t.expenseList
+                                                              .addedBy,
+                                                          {
+                                                              name: nameOf(
+                                                                  e.createdBy,
+                                                              ),
+                                                          },
+                                                      )}
+                                            </>
+                                        ) : null}
                                     </p>
                                 </div>
                                 <div className="text-right">

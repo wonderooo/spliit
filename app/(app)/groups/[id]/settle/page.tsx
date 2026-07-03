@@ -41,6 +41,7 @@ export default async function SettlePage({
         baseAmount: s.baseAmount,
         date: s.date,
         note: s.note,
+        createdBy: s.createdBy,
       }))}
     />
   );

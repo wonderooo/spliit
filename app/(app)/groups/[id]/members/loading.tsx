@@ -8,7 +8,7 @@ export default function MembersLoading() {
       <section className="flex flex-col gap-2">
         <div className="flex items-center justify-between">
           <Skeleton className="h-4 w-28" />
-          <Skeleton className="h-8 w-20 rounded-md" />
+          <Skeleton className="h-7 w-20 rounded-md" />
         </div>
         <Card className="gap-0 p-0">
           <ul className="divide-y">

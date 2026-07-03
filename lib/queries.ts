@@ -101,6 +101,7 @@ export type ExpenseWithSplits = {
   createdAt: Date;
   personal: boolean;
   receipt: ReceiptData | null;
+  createdBy: string;
   splits: { userId: string; amount: number; shareValue: string | null }[];
 };
 

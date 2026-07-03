@@ -43,6 +43,13 @@
       "when": 1783018715517,
       "tag": "0005_smiling_forgotten_one",
       "breakpoints": true
+    },
+    {
+      "idx": 6,
+      "version": "7",
+      "when": 1783079591661,
+      "tag": "0006_superb_sentinels",
+      "breakpoints": true
     }
   ]
 }

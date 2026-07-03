@@ -162,6 +162,7 @@ export function ExpensesView({
       createdAt: new Date(),
       personal: input.personal ?? false,
       receipt: input.receipt ?? null,
+      createdBy: currentUserId,
       splits: [],
     };
   }
@@ -192,6 +193,7 @@ export function ExpensesView({
             ...buildOptimistic(input),
             id: target.id,
             createdAt: target.createdAt,
+            createdBy: target.createdBy,
             // A manual edit omits `receipt`; keep the existing breakdown so the
             // receipt marker doesn't flicker off before the refresh lands.
             receipt: input.receipt ?? target.receipt,

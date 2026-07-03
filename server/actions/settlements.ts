@@ -59,6 +59,7 @@ export async function recordSettlement(input: unknown): Promise<ActionResult> {
     baseAmount,
     date: data.date,
     note: data.note || null,
+    createdBy: session.user.id,
   });
 
   revalidatePath(`/groups/${data.groupId}`);

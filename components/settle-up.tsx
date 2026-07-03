@@ -50,6 +50,7 @@ type SettlementRow = {
   baseAmount: number;
   date: string;
   note: string | null;
+  createdBy: string;
 };
 
 type Prefill = {
@@ -199,6 +200,7 @@ export function SettleUp({
             baseAmount,
             date: p.date,
             note: p.note || null,
+            createdBy: currentUserId,
           },
         });
         applyTxOptimistic({
@@ -364,6 +366,7 @@ export function SettleUp({
                   key={s.id}
                   settlement={s}
                   baseCurrency={baseCurrency}
+                  currentUserId={currentUserId}
                   nameOf={nameOf}
                   colorOf={colorOf}
                   removedOf={removedOf}
@@ -459,6 +462,7 @@ function ScopeToggle({
 function SettlementItem({
   settlement: s,
   baseCurrency,
+  currentUserId,
   nameOf,
   colorOf,
   removedOf,
@@ -466,6 +470,7 @@ function SettlementItem({
 }: {
   settlement: SettlementRow;
   baseCurrency: string;
+  currentUserId: string;
   nameOf: (uid: string) => string;
   colorOf: (uid: string) => string | null;
   removedOf: (uid: string) => boolean;
@@ -473,6 +478,14 @@ function SettlementItem({
 }) {
   const t = useT();
   const foreign = s.currency !== baseCurrency;
+  // Recorder only when someone other than the payer logged the payment;
+  // otherwise the from → to line already says it.
+  const recordedBy =
+    s.createdBy !== s.fromUserId
+      ? s.createdBy === currentUserId
+        ? t.settleUp.recordedByYou
+        : format(t.settleUp.recordedBy, { name: nameOf(s.createdBy) })
+      : null;
 
   return (
     <li className="flex items-center gap-2 px-4 py-3">
@@ -501,6 +514,7 @@ function SettlementItem({
         <span className="text-xs text-muted-foreground">
           {s.date}
           {s.note ? ` · ${s.note}` : ""}
+          {recordedBy ? ` · ${recordedBy}` : ""}
         </span>
       </div>
       <div className="text-right">
