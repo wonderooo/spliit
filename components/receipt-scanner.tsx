@@ -10,6 +10,7 @@ import {
   formatMoney,
   currencyDecimals,
   isKnownCurrency,
+  normalizeDecimalInput,
 } from "@/lib/currency";
 import { distribute } from "@/lib/splits";
 import type { ReceiptData } from "@/lib/db/schema";
@@ -493,7 +494,9 @@ export function ReceiptScanner({
                     <Input
                       value={r.price}
                       onChange={(e) =>
-                        updateRow(r.id, { price: e.target.value })
+                        updateRow(r.id, {
+                          price: normalizeDecimalInput(e.target.value),
+                        })
                       }
                       inputMode="decimal"
                       placeholder="0.00"
@@ -552,7 +555,7 @@ export function ReceiptScanner({
                 <Input
                   id="r-tax"
                   value={tax}
-                  onChange={(e) => setTax(e.target.value)}
+                  onChange={(e) => setTax(normalizeDecimalInput(e.target.value))}
                   inputMode="decimal"
                   placeholder="0.00"
                   className="h-8"
@@ -565,7 +568,7 @@ export function ReceiptScanner({
                 <Input
                   id="r-tip"
                   value={tip}
-                  onChange={(e) => setTip(e.target.value)}
+                  onChange={(e) => setTip(normalizeDecimalInput(e.target.value))}
                   inputMode="decimal"
                   placeholder="0.00"
                   className="h-8"

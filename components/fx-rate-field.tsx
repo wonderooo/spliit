@@ -2,7 +2,7 @@
 
 import { ArrowRight } from "lucide-react";
 import { Input } from "@/components/ui/input";
-import { formatMoney } from "@/lib/currency";
+import { formatMoney, normalizeDecimalInput } from "@/lib/currency";
 
 /**
  * Compact inline editor for a foreign-currency exchange rate:
@@ -37,12 +37,10 @@ export function FxRateField({
       <Input
         id={id}
         aria-label={label}
-        type="number"
+        type="text"
         inputMode="decimal"
-        step="any"
-        min="0"
         value={value}
-        onChange={(e) => onChange(e.target.value)}
+        onChange={(e) => onChange(normalizeDecimalInput(e.target.value))}
         className="w-24"
       />
       <span className="text-muted-foreground">{baseCurrency}</span>

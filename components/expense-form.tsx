@@ -13,6 +13,7 @@ import {
   formatMoney,
   convertMinorUnits,
   getCurrency,
+  normalizeDecimalInput,
 } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -314,12 +315,12 @@ export function ExpenseForm({
               <Label htmlFor="amount">{t.expenseForm.amount}</Label>
               <Input
                 id="amount"
-                type="number"
+                type="text"
                 inputMode="decimal"
-                step="any"
-                min="0"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) =>
+                  setAmount(normalizeDecimalInput(e.target.value))
+                }
                 placeholder="0.00"
                 required
               />
@@ -449,13 +450,14 @@ export function ExpenseForm({
                   {isSel && splitType !== "equal" && (
                     <div className="flex items-center gap-1.5">
                       <Input
-                        type="number"
+                        type="text"
                         inputMode="decimal"
-                        step="any"
-                        min="0"
                         value={values[m.id] ?? ""}
                         onChange={(e) =>
-                          setValues((v) => ({ ...v, [m.id]: e.target.value }))
+                          setValues((v) => ({
+                            ...v,
+                            [m.id]: normalizeDecimalInput(e.target.value),
+                          }))
                         }
                         className="h-8 w-24 text-right"
                       />

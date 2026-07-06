@@ -13,6 +13,7 @@ import {
   toMajorUnits,
   convertMinorUnits,
   toMinorUnits,
+  normalizeDecimalInput,
 } from "@/lib/currency";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -696,12 +697,10 @@ function SettleDialog({
               <Input
                 id="s-amount"
                 ref={amountRef}
-                type="number"
+                type="text"
                 inputMode="decimal"
-                step="any"
-                min="0"
                 value={amount}
-                onChange={(e) => setAmount(e.target.value)}
+                onChange={(e) => setAmount(normalizeDecimalInput(e.target.value))}
                 placeholder="0.00"
                 required
               />

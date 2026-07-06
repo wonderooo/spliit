@@ -70,12 +70,24 @@ export function currencyDecimals(code: string): number {
 }
 
 /**
+ * Normalize a user-typed amount so it parses regardless of locale. Mobile
+ * numeric keyboards (e.g. iOS in Poland) emit a decimal comma; convert it to a
+ * dot so `Number()`/`toMinorUnits` accept it.
+ */
+export function normalizeDecimalInput(input: string): string {
+  return input.replace(",", ".");
+}
+
+/**
  * Parse a human-entered amount string (e.g. "12.34") into integer minor units
  * for the given currency. Throws on invalid input.
  */
 export function toMinorUnits(input: string | number, code: string): number {
   const decimals = currencyDecimals(code);
-  const value = typeof input === "number" ? input : Number(input.trim());
+  const value =
+    typeof input === "number"
+      ? input
+      : Number(normalizeDecimalInput(input.trim()));
   if (!Number.isFinite(value)) {
     throw new Error(`Invalid amount: ${input}`);
   }

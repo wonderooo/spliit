@@ -28,6 +28,11 @@ describe("currency minor units", () => {
     expect(toMinorUnits("10.004", "USD")).toBe(1000);
   });
 
+  it("accepts a decimal comma (mobile keyboards)", () => {
+    expect(toMinorUnits("12,34", "USD")).toBe(1234);
+    expect(toMinorUnits("1,5", "PLN")).toBe(150);
+  });
+
   it("throws on invalid input", () => {
     expect(() => toMinorUnits("abc", "USD")).toThrow();
   });
